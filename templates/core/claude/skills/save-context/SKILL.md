@@ -5,7 +5,13 @@ description: Persist session progress into the project memory files. Use after c
 
 # Save context
 
-Update `.claude/memory/` — surgical edits, not rewrites:
+## Workflow
+1. **Inventory the session**: list what was built, what was decided (and why), what broke and how
+   it was fixed, what's now blocked. If the session contradicts an existing memory entry, that's a
+   decision change → record the new choice in `DECISIONS.md` (dated), don't silently overwrite.
+2. **Map each item to its file** using the table below. One fact, one home — no duplication.
+3. **Apply surgical edits, then verify integrity**: re-read your diff — no pre-existing fact, date
+   or gotcha may disappear. Updating an entry in place is fine; losing its date is not.
 
 | File | Write here |
 |---|---|
@@ -15,7 +21,15 @@ Update `.claude/memory/` — surgical edits, not rewrites:
 | `ARCHITECTURE.md` | Only if the structure itself changed (new package, new layer rule). |
 | `COMMANDS.md` | Only when a new command proved useful (with the exact working flags). |
 
-Rules:
-- Facts only — no narration, no praise. Convert relative dates to absolute (2026-06-08, not "today").
+**Example — a gotcha entry** (PROJECT_STATE.md, gotchas log):
+```markdown
+- **Records failed to save: "cannot use an empty list to initialize a new field (tags)"**
+  → backend rejects empty arrays on list fields → omit the field when the array is empty. Fixed 2026-06-09.
+```
+
+## Rules
+- Facts only — no narration, no praise. Convert relative dates to absolute (2026-06-09, not "today").
 - Gotchas are the most valuable entries: always symptom → cause → fix.
+- **Integrity**: never delete or rewrite pre-existing facts/dates; append or update in place.
 - Never log secrets, tokens, or personal data.
+- Finish with a one-line confirmation listing the files you touched.

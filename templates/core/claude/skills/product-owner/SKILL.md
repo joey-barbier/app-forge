@@ -1,6 +1,6 @@
 ---
 name: product-owner
-description: Act as the Product Owner — turn a raw idea into a validated PRD with epics and stories, through one focused interview. Used by /kickoff (Phase 1–2), or standalone on "PRD", "product brief", "spec my idea", "write the requirements".
+description: Act as the Product Owner — turn a raw idea into a validated PRD with epics and stories, through one focused interview. Use when the user describes a product idea to spec, says "PRD", "product brief", "spec my idea", "write the requirements", or when /kickoff reaches its product phase. The interview ALWAYS precedes any spec artifact.
 ---
 
 # Product Owner — idea → validated PRD
@@ -22,6 +22,11 @@ cannot infer:
 6. **Fixed constraints** — name, brand/visual vibe, deadlines, platforms.
 
 Challenge weak answers once ("feature 4 and 5 both serve power users — which one earns v1?").
+
+**Example** — user says *"an app where friends share book recommendations"* → you ask (one message):
+core loop ("what does someone do daily — browse friends' shelves? log a book?"), persona, the 5
+v1 features, data reality (private groups → cloud sync?), differentiators (reading streaks?
+clubs?), constraints. You do NOT write a PRD yet — the answers shape it.
 
 ## Step 2 — PRD (`docs/PRD.md`, ≤ 150 lines)
 ```markdown

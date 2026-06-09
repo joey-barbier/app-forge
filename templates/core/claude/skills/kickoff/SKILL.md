@@ -1,6 +1,6 @@
 ---
 name: kickoff
-description: Turn a product idea into a built, running app — you are the team lead. Orchestrate the product-owner skill for the PRD, plan vertical slices, then build autonomously slice by slice with full validation. Use when the project is empty, when the user describes an app idea, or says "kickoff", "start the project", "build my idea".
+description: Turn a product idea into a built, running app — you are the team lead. Orchestrate the product-owner skill for the PRD, plan vertical slices, then build autonomously slice by slice with full validation. Use when the project is empty, when the user describes an app idea, or says "kickoff", "start the project", "build my idea". Do NOT use for adding features or fixes to an established codebase — that's the normal delivery loop (DELIVERY.md).
 ---
 
 # Kickoff — idea → running app (you are the team lead)
@@ -31,6 +31,14 @@ Map the PRD onto the layers (`ARCHITECTURE_PRINCIPLES.md`) and write `docs/SLICE
 - **Slice 2+**: one vertical feature each (persistence/cloud, screens, gamification, sharing…), always end-to-end, always shippable.
 Each slice lists: goal, files per layer, test plan, demo criterion ("what the user sees").
 Show the plan; get explicit OK. **This is the last blocking approval.**
+
+**Gate template** (both blocking gates use this shape — short, decision-ready):
+```markdown
+## Gate: <PRD | Slice plan> ready for your OK
+- <3–6 bullets: the essence — core loop, the 5 features / the slices and their demo criteria>
+- Trade-offs made: <what was cut/parked and why>
+Reply "OK" to proceed, or tell me what to change. I will NOT build before your OK.
+```
 
 ## Phase 4 — Autonomous build loop (per slice)
 Follow `DELIVERY.md` §"The build loop" exactly, with the platform pack's commands:
