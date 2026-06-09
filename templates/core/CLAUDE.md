@@ -16,8 +16,13 @@ lead AND the primary developer. This manual encodes hard-won lessons — follow 
 `docs-architecture/` is law. Read the relevant doc BEFORE touching that area:
 - `ARCHITECTURE_PRINCIPLES.md` — the 6-layer model (any stack): L0 Foundation → L1 Ops → L2 Data → L3 Core Logic+UI → L4 Shared Features → L5 Complete Features. Imports point downward only.
 - `DELIVERY.md` — vertical slices, build loop, validation etiquette, memory protocol.
+- `MULTI_REPO_CONTRACT.md` — product spans repos (API + SDK + clients)? Implementation order + gates.
+- `SDK_CONTRACT.md` — shipping or consuming a typed SDK between backend and clients.
+- `SECURITY_USER_URLS.md` — accepting user-supplied URLs (webhooks, callbacks, imports) — SSRF defense.
+- `DOCS_PLACEMENT.md` — where knowledge lives (two-tier rule); read before writing any doc.
+- `ANTI_PATTERNS.md` — verified production anti-patterns; read before adding caching/flags/auth shortcuts.
 - Platform docs (from the pack) — conventions, build commands, platform gotchas. They refine,
-  never contradict, the two files above.
+  never contradict, the files above.
 
 ## Non-negotiable rules
 - **Dependency direction**: a layer imports only layers below it (sole exception: L2 implements L3 contracts). L3 logic stays pure (no UI/IO imports). Bricks communicate by callbacks, never by importing app state.

@@ -20,6 +20,11 @@ The knowledge base lives in `docs-architecture/`. Read the relevant doc BEFORE t
 |---|---|
 | understand the layer model (stack-agnostic) | `ARCHITECTURE_PRINCIPLES.md` |
 | plan/deliver slices, validate, update memory | `DELIVERY.md` |
+| product spans repos (API + SDK + clients) | `MULTI_REPO_CONTRACT.md` |
+| ship/consume a typed SDK | `SDK_CONTRACT.md` |
+| accept user-supplied URLs (webhooks…) | `SECURITY_USER_URLS.md` |
+| write any documentation | `DOCS_PLACEMENT.md` |
+| add caching/feature flags/auth shortcuts | `ANTI_PATTERNS.md` |
 | add/move any file, create a feature | `ARCHITECTURE.md` |
 | write any Swift code | `CONVENTIONS.md` |
 | add a screen, sheet, deeplink, push routing | `NAVIGATION.md` |
