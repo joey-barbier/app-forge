@@ -12,18 +12,18 @@ thin end-to-end features that a user can see working.
   responds). Proof: screenshot or curl output.
 - **Slice 1 — domain heart**: core entities + the main engine, exhaustively tested, plus the ONE
   main screen reading from InMemory data. Proof: tests green + screenshot.
-- **Slice N**: one feature each, always end-to-end (Core → DataLayer → Module → App), always
-  leaving the app shippable.
+- **Slice N**: one feature each, always end-to-end (L3 logic → L2 data → L3/L4 UI bricks → L5
+  screen), always leaving the app shippable.
 
 Each slice gets a short blueprint before code: goal, files per layer, test plan, demo criterion
 ("what the user sees"). Blueprints live in `docs/`.
 
 ## The build loop (per slice)
 
-1. **Core first**: models/engines + their tests. Run the layer's tests — green before moving on.
-2. **DataLayer**: interface + InMemory impl (real backend impl only when the slice demands it).
-3. **Module**: UI bricks, design tokens only, callbacks as boundaries.
-4. **App**: assemble screen + state + navigation.
+1. **L3 Core Logic first**: models/engines + contracts + their tests. Layer tests green before moving on.
+2. **L2 Data**: InMemory impl of the contracts (real backend impl only when the slice demands it).
+3. **L3 Core UI / L4 bricks**: reusable components — L0 tokens only, callbacks as boundaries.
+4. **L5 Feature**: assemble screen + state + navigation.
 5. **Full build** of the app target; fix until green.
 6. **Eyes-on validation**: run it, navigate to the feature, capture proof (screenshot/recording/
    response), and actually inspect it — layout, empty states, error states.

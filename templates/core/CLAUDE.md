@@ -14,13 +14,13 @@ lead AND the primary developer. This manual encodes hard-won lessons — follow 
 
 ## Knowledge base — read before coding
 `docs-architecture/` is law. Read the relevant doc BEFORE touching that area:
-- `ARCHITECTURE_PRINCIPLES.md` — the layer model (any stack): tokens → DataLayer → Core → presentation.
+- `ARCHITECTURE_PRINCIPLES.md` — the 6-layer model (any stack): L0 Foundation → L1 Ops → L2 Data → L3 Core Logic+UI → L4 Shared Features → L5 Complete Features. Imports point downward only.
 - `DELIVERY.md` — vertical slices, build loop, validation etiquette, memory protocol.
 - Platform docs (from the pack) — conventions, build commands, platform gotchas. They refine,
   never contradict, the two files above.
 
 ## Non-negotiable rules
-- **Dependency direction**: Core stays pure (no UI/IO framework imports). IO behind interfaces in DataLayer. UI bricks communicate by callbacks, never by importing the Store.
+- **Dependency direction**: a layer imports only layers below it (sole exception: L2 implements L3 contracts). L3 logic stays pure (no UI/IO imports). Bricks communicate by callbacks, never by importing app state.
 - **Design tokens only** — no hardcoded colors/fonts/spacing in presentation code.
 - **Proof over claims**: layer tests green → app build green → eyes-on proof (screenshot/response) before anything is "done". Failures reported with output.
 - **Every domain rule ships with its test** in the same change.

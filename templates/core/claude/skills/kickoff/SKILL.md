@@ -27,18 +27,18 @@ doesn't map cleanly onto the layer model.
 ## Phase 3 — Slice plan
 Map the PRD onto the layers (`ARCHITECTURE_PRINCIPLES.md`) and write `docs/SLICES.md`:
 - **Slice 0 — skeleton runs**: app boots empty on the target (simulator/emulator/browser/server). Proof required.
-- **Slice 1 — domain heart**: core entities + main engine fully tested + the ONE main screen on InMemory data.
+- **Slice 1 — domain heart**: L3 entities + main engine fully tested + the ONE main screen on InMemory data.
 - **Slice 2+**: one vertical feature each (persistence/cloud, screens, gamification, sharing…), always end-to-end, always shippable.
 Each slice lists: goal, files per layer, test plan, demo criterion ("what the user sees").
 Show the plan; get explicit OK. **This is the last blocking approval.**
 
 ## Phase 4 — Autonomous build loop (per slice)
 Follow `DELIVERY.md` §"The build loop" exactly, with the platform pack's commands:
-1. Core: models/engines + tests → layer tests green.
-2. DataLayer: interface + InMemory impl (real backend only when the slice demands it — follow the
-   platform pack's backend guide and its gotchas religiously).
-3. Module: reusable UI bricks (design tokens only, callbacks as boundaries).
-4. App: screen assembly, store wiring, navigation per the pack's navigation doc.
+1. L3 Core Logic: models/engines/contracts + tests → layer tests green.
+2. L2 Data: InMemory impl of the contracts (real backend only when the slice demands it — follow
+   the platform pack's backend guide and its gotchas religiously).
+3. L3 Core UI / L4 bricks: reusable components (L0 tokens only, callbacks as boundaries).
+4. L5 Feature: screen assembly, store wiring, navigation per the pack's navigation doc.
 5. Full app build; fix until green.
 6. **Eyes-on proof**: run it (simulator MCP / browser / curl), navigate to the feature, capture and
    actually inspect the proof (layout, dark mode, empty states, error states).

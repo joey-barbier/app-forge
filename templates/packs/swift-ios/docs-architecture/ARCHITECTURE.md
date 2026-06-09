@@ -5,34 +5,46 @@ is assembled from
 independently buildable bricks: 3 local SPM packages + 3 app-target folders. Every layer below the
 app target compiles and tests with plain `swift build` / `swift test` — no Xcode, no simulator.
 
-## 1. Layer Model
+## 1. Layer Model — Swift instantiation of the universal L0–L5 contract
+
+This maps `ARCHITECTURE_PRINCIPLES.md` (read it first) onto SPM packages + app folders:
 
 ```
-Packages/{{PROJECT_NAME}}Core          (pure Swift)    Domain models + Engines + Repository PROTOCOLS + Services
-   ▲ depends on Core
-Packages/DataLayer     (IO)            Repository IMPLEMENTATIONS (CloudKit/network/persistence) + DTO↔domain mapping
-Packages/{{PROJECT_NAME}}DS (SwiftUI)  Design system: DS.* tokens, Color.DS.*, generic components
-   ▲ all three imported by
-App target ({{PROJECT_NAME}}/)
-   ├─ Module/   reusable UI bricks per domain concept     Module/Item, Module/ItemGroup, Module/Map
-   ├─ App/      user-facing screens assembling modules    App/Feed, App/Detail, App/Profile (VVM-I)
-   ├─ Store/    @Observable app state, composition root   AppStore + SampleData
-   └─ Tools/    cross-cutting: router, schedulers, formatters, location
+L5  COMPLETE FEATURES   App/      user-facing screens assembling bricks (VVM-I)
+                        Store/    @Observable app state, composition root (picks real vs InMemory)
+                        Tools/    cross-cutting: router, schedulers, formatters, location
+L4  SHARED FEATURES     Module/   reusable domain-aware UI bricks   Module/Item, Module/ItemGroup, Module/Map
+L3  CORE LOGIC          Packages/{{PROJECT_NAME}}Core   (pure Swift) domain models + engines + services
+                                                        + repository CONTRACTS + InMemory impls
+L3  CORE UI             Packages/{{PROJECT_NAME}}DS — Components/   domain-blind components (buttons, cards…)
+L2  DATA                Packages/DataLayer  (IO)  repository IMPLEMENTATIONS (CloudKit/network)
+                                                  + CKRecord↔domain mapping  — implements L3 contracts
+L1  OPS                 no dedicated package until needed — logging conventions live in CONVENTIONS.md;
+                        create Packages/Ops (remote config, analytics, feature flags) the day a slice needs it
+L0  FOUNDATION          Packages/{{PROJECT_NAME}}DS — tokens   DS.Padding/Radius, Color.DS.*, DS.Font
+                        + base extensions/formatters
 ```
+
+Notes on the mapping:
+- **The DS package physically hosts two layers**: L0 (tokens) and L3 Core UI (Components/).
+  Internal rule: Components import tokens, never the reverse.
+- **DataLayer implements Core's contracts** — the one sanctioned upward arrow (ports & adapters):
+  it may import L3 protocols + models, never services/engines.
+- **Imports point downward only** everywhere else; a feature never imports a sibling feature.
 
 Brick rule: **Module/ components must work in any app screen; App/ screens are throwaway
 assemblies.** When in doubt, start in App/ and promote to Module/ on second use.
 
 ## 2. Dependency Direction Rules
 
-| Layer | May import | Must NEVER import | Why |
+| Layer (L#) | May import | Must NEVER import | Why |
 |---|---|---|---|
-| Core | Foundation only | SwiftUI, UIKit, CloudKit, DataLayer | Tests run on the macOS host in seconds; logic stays platform-portable |
-| DataLayer | Core + IO frameworks (CloudKit, URLSession) | SwiftUI, the app target | It only implements Core protocols |
-| {{PROJECT_NAME}}DS | SwiftUI | Core, DataLayer | Tokens/components are domain-blind, reusable across apps |
-| Module/ | Core, DS | DataLayer, Store types in signatures | Bricks take domain values + closures, not the store |
-| App/ | everything | — | Final assembly point |
-| Store/ | Core, DataLayer | DS (it has no UI) | Sole place that knows which repository implementation runs |
+| L3 Core Logic ({{PROJECT_NAME}}Core) | Foundation (the Swift module) only | SwiftUI, UIKit, CloudKit, DataLayer | Tests run on the macOS host in seconds; logic stays platform-portable |
+| L2 DataLayer | L3 contracts/models + IO frameworks (CloudKit, URLSession) | SwiftUI, the app target | It only implements Core protocols |
+| L0+L3-UI {{PROJECT_NAME}}DS | SwiftUI | Core, DataLayer | Tokens/components are domain-blind, reusable across apps |
+| L4 Module/ | L3 Core, DS | DataLayer, Store types in signatures | Bricks take domain values + closures, not the store |
+| L5 App/ | everything | — | Final assembly point |
+| L5 Store/ | L3 Core, L2 DataLayer | DS (it has no UI) | Sole place that knows which repository implementation runs |
 
 > ⚠️ **Gotcha:** Symptom — `swift test` on Core suddenly needs a simulator destination and takes
 > minutes. Cause — someone added `import SwiftUI` (often for `Color` or `@Observable` view helpers)

@@ -28,10 +28,10 @@ The knowledge base lives in `docs-architecture/`. Read the relevant doc BEFORE t
 | write or modify domain logic | `TESTING.md` |
 | build, run, validate, debug on device | `WORKFLOW.md` |
 
-Layer summary (full rules in ARCHITECTURE.md):
-`{{PROJECT_NAME}}DS` (design tokens) → `DataLayer` (repositories: protocols + CloudKit + InMemory) →
-`{{PROJECT_NAME}}Core` (pure domain: models, engines, services — **never imports SwiftUI**) →
-app `Module/` (reusable UI bricks) → app `App/` (screens) + `Store/` (observable state, composition root) + `Tools/`.
+Layer summary (universal contract in ARCHITECTURE_PRINCIPLES.md, Swift mapping in ARCHITECTURE.md):
+L0 `{{PROJECT_NAME}}DS` tokens · L1 Ops (create when needed) · L2 `DataLayer` (implements L3 contracts) ·
+L3 `{{PROJECT_NAME}}Core` (pure domain — **never imports SwiftUI**) + DS `Components/` (Core UI) ·
+L4 app `Module/` (shared feature bricks) · L5 app `App/` + `Store/` + `Tools/`. Imports point downward only.
 
 ## Non-negotiable rules
 - **Packages first**: `swift build`/`swift test --package-path Packages/<X>` before any `xcodebuild`. Fast, precise errors.
