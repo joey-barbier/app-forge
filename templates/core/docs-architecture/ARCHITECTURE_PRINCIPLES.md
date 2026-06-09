@@ -54,7 +54,48 @@ Everything else is absolute:
   reaches into app state on its own.
 - **L0 tokens are the only source of visual values.** A hardcoded color in L4/L5 is a bug.
 
+## Placing a new brick — the algorithm
+
+The named bands above are the canonical shape, but a brick's level is not picked from a
+category — it is **computed from its dependencies**:
+
+> **Start at L0. Climb only when a dependency forces you up.**
+> A brick's level = (highest level among the bricks it imports) + 1. Place it as LOW as it
+> can possibly live.
+
+Worked example — adding a `Monitoring` brick:
+1. Assume **L0**… but it needs base formatters from Foundation → it must sit above L0 → **L1**.
+2. At L1… but it reads sampling rules from remote config, which lives in Ops (L1) → above L1 → **L2**.
+3. At L2 nothing else pushes it up → **it lands at L2.** Done — even though "monitoring"
+   *sounds* like Ops, its dependencies decide, not its name.
+
+Corollaries:
+- A brick that keeps climbing is a smell: split it (the pure part stays low, the consuming
+  part moves up).
+- **~6 levels is the maximum.** If you need a 7th, you are over-slicing — merge bands.
+- Re-run the algorithm when a brick gains a dependency; it may need to move up (or the
+  dependency may belong lower).
+
+## This applies to EVERY stack — including APIs
+
+The layer discipline is not a UI concern. A backend has the exact same lattice:
+
+```
+L5  routes/controllers, app bootstrap, DI wiring
+L4  shared feature modules (auth flow, billing, webhooks)
+L3  use cases / domain services / entities / repository contracts
+L2  repository impls, DB access, external API clients (Stripe, auth provider…)
+L1  ops: remote config, feature flags, metrics, structured logging
+L0  primitives: shared types, formatters, base extensions
+```
+
+Same absolute rule downward-only: a repository (L2) never calls a use case (L3); a use case
+never imports a controller; **and no brick ever calls an SDK/client that lives above its own
+level** — if you need it, you are at the wrong level, or the SDK is.
+
 ## Where does this file go? (decision table)
+
+Typical band per kind of file — **the placement algorithm above has the final word**:
 
 | You are adding… | Layer |
 |---|---|
