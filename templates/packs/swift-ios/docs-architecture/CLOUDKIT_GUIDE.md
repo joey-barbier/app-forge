@@ -213,3 +213,12 @@ bootstrap (zone + subscription creation) onto a single in-flight `Task` inside t
 `makeRecord(in:parent:)` with `record.parent` → root). 3. Route through the `(scope, zoneID)` cache
 — never hardcode a DB. 4. Exercise every field in Dev (non-empty lists!), then deploy schema to
 Production. 5. Two-account device test before shipping.
+
+
+## Atomic multi-record persistence — encode it in the CONTRACT
+> ⚠️ **Gotcha:** Symptom — a pin saves but the player profile write fails (or vice-versa):
+> XP/achievements drift from the pin set forever. Cause — two separate `save` calls where the
+> domain requires all-or-nothing. Fix — the repository CONTRACT exposes the atomic operation
+> (`savePinAndPlayer(_:_:)` — one method, one `modifyRecords(atomically: true)` underneath),
+> so no caller CAN write them separately. If two records must stay consistent, their atomicity
+> belongs in the protocol, not in caller discipline.

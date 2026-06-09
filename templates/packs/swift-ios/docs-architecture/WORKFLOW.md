@@ -138,9 +138,13 @@ cd Packages/{{PROJECT_NAME}}DS && xcodebuild -scheme {{PROJECT_NAME}}DS \
   -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/dd build
 # (repeat for Core and DataLayer)
 # 2. Typecheck the app-target sources against those products:
-xcrun swiftc -typecheck -sdk $(xcrun --sdk iphonesimulator --show-sdk-path) \
+xcrun swiftc -typecheck -parse-as-library -swift-version 6 \
+  -default-isolation MainActor -module-name {{PROJECT_NAME}} \
+  -sdk $(xcrun --sdk iphonesimulator --show-sdk-path) \
   -target arm64-apple-ios26.0-simulator \
-  -I /tmp/dd/Build/Products/Debug-iphonesimulator {{PROJECT_NAME}}/**/*.swift
+  -I /tmp/dd/Build/Products/Debug-iphonesimulator $(find {{PROJECT_NAME}} -name '*.swift')
+# -parse-as-library (required for @main) · -default-isolation MainActor (mirrors the app
+# target's SWIFT_DEFAULT_ACTOR_ISOLATION) · without these the typecheck fails on valid sources
 ```
 Report which rung was reached (simulator screenshot > app build > typecheck > package tests).
 A lower rung is acceptable ONLY if stated explicitly in the slice report and logged as debt.
@@ -148,3 +152,14 @@ A lower rung is acceptable ONLY if stated explicitly in the slice report and log
 > ⚠️ **Gotcha:** Symptom — a demo value ("~12 min", "5 items") presented as "computed by the
 > engine" turns out fabricated. Rule — any number/string attributed to code must come from
 > actually executed output (test log, REPL, app run). If you didn't run it, label it an estimate.
+
+
+## Launch checklist (before ANY external testers)
+- CloudKit: schema deployed Dev→Prod, `aps-environment` = production (see CLOUDKIT_GUIDE).
+- User-generated content (shared groups, names, notes): report + block + ≤24h takedown path
+  (App Store Guideline 1.2 — rejection otherwise).
+- Age rating honest to the content; age gate in-app if 17+/18+.
+- Privacy: policy URL + App Privacy labels; precise location = sensitive (GDPR Art. 9 when
+  combined with intimate-life data) — collect the minimum, state the purpose.
+- Shared-data privacy review: what does a group member SEE about others (stable user ids?
+  exact coordinates?) — decide precision/pseudonymization consciously, log it in DECISIONS.md.

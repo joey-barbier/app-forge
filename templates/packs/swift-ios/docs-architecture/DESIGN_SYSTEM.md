@@ -228,3 +228,9 @@ Note the pattern: `.designSystem(font:)` sets typography only; color is always a
 - Do put reusable visual chrome (cards, backgrounds, button styles) in `Components/`. Never put feature logic, models, or networking in the DS package — it stays dependency-free.
 - Corner shapes: always `RoundedRectangle(cornerRadius: DS.Radius.*, style: .continuous)`.
 - Hairlines: `DS.Size.hairline` with `strokeBorder(Color.DS.stroke, ...)`.
+
+
+> Note — the scaffold ships `DS.Font` as a case-enum mapping to system fonts (see
+> Packages/{{PROJECT_NAME}}DS/Sources/{{PROJECT_NAME}}DS/DSFont.swift). If this doc's examples
+> show a different shape, THE SCAFFOLD FILE IS THE TRUTH — extend it rather than rewriting it
+> to match prose. (Doc/scaffold drift was caught in validation; code wins.)

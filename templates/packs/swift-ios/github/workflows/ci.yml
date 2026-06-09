@@ -19,7 +19,9 @@ jobs:
           cd Packages/{{PROJECT_NAME}}DS
           xcodebuild -scheme {{PROJECT_NAME}}DS -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/dd build | tail -1
           cd ../..
-          xcrun swiftc -typecheck -sdk $(xcrun --sdk iphonesimulator --show-sdk-path) \
+          xcrun swiftc -typecheck -parse-as-library -swift-version 6 \
+            -default-isolation MainActor -module-name {{PROJECT_NAME}} \
+            -sdk $(xcrun --sdk iphonesimulator --show-sdk-path) \
             -target arm64-apple-ios26.0-simulator \
             -I /tmp/dd/Build/Products/Debug-iphonesimulator \
             $(find {{PROJECT_NAME}} -name '*.swift')

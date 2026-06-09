@@ -1,6 +1,6 @@
 # ARCHITECTURE — Layered "Lego Brick" iOS App
 
-Pattern for SwiftUI apps (Swift 6.2, strict concurrency, iOS 26 app / iOS 18 packages). The app
+Pattern for SwiftUI apps (Swift 6.2, strict concurrency, iOS 26 everywhere — app target AND packages (one deployment story; bump together)). The app
 is assembled from
 independently buildable bricks: 3 local SPM packages + 3 app-target folders. Every layer below the
 app target compiles and tests with plain `swift build` / `swift test` — no Xcode, no simulator.

@@ -16,9 +16,10 @@ follow every gate below. Do not skip phases. Do not start coding before Phase 3 
      coverage is reduced for this stack.
 3. Read `.claude/memory/*.md` — if a PRD/slice plan already exists, resume instead of restarting.
 4. **Hard tooling gate**: verify the pack's `requirements` by RUNNING their commands (version
-   checks), and that MCP servers from `.mcp.json` respond. Missing tool → give the one-line
-   install NOW and agree on the degraded-proof plan (the pack's WORKFLOW.md defines the proof
-   ladder) BEFORE Phase 1. Never discover tooling gaps mid-build.
+   checks), and that MCP servers from `.mcp.json` respond. Missing tool → STOP: give the
+   one-line install and ask the user to run it (or approve the degraded-proof plan from the
+   pack's WORKFLOW.md ladder — their explicit choice, recorded in DECISIONS.md). Building a
+   whole project that ends with "zero pixels ever seen" is not a default anyone chose.
 
 ## Phase 1–2 — Product (delegate to the PO)
 Run the **`product-owner` skill**: one focused interview → `docs/PRD.md` (lean, ≤150 lines, with
@@ -32,6 +33,8 @@ Map the PRD onto the layers (`ARCHITECTURE_PRINCIPLES.md`) and write `docs/SLICE
 - **Slice 1 — domain heart**: L3 entities + main engine fully tested + the ONE main screen on InMemory data.
 - **Slice 2+**: one vertical feature each (persistence/cloud, screens, gamification, sharing…), always end-to-end, always shippable.
 Each slice lists: goal, files per layer, test plan, demo criterion ("what the user sees").
+Demo numbers/strings in the plan are ESTIMATES until executed — label them so, and correct the
+plan from real output when the slice lands (the executed-output rule applies to plans too).
 Show the plan; get explicit OK. **This is the last blocking approval.**
 
 **Gate template** (both blocking gates use this shape — short, decision-ready):
