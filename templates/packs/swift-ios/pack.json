@@ -1,0 +1,11 @@
+{
+  "id": "swift-ios",
+  "label": "iOS app — Swift 6.2 / SwiftUI / CloudKit",
+  "languages": ["swift"],
+  "idPrompt": "Bundle identifier",
+  "requirements": [
+    "Xcode 26+",
+    "XcodeGen (brew install xcodegen) — run `xcodegen generate` to create the .xcodeproj"
+  ],
+  "notes": "Packages build day one: swift test --package-path Packages/{{PROJECT_NAME}}Core"
+}

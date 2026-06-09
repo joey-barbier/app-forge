@@ -1,0 +1,33 @@
+# XcodeGen manifest — run `xcodegen generate` to (re)create {{PROJECT_NAME}}.xcodeproj.
+# The .xcodeproj is gitignored: this file is the source of truth (merge-conflict-free).
+name: {{PROJECT_NAME}}
+options:
+  bundleIdPrefix: {{BUNDLE_ID}}
+  deploymentTarget:
+    iOS: "26.0"
+packages:
+  {{PROJECT_NAME}}DS:
+    path: Packages/{{PROJECT_NAME}}DS
+  {{PROJECT_NAME}}Core:
+    path: Packages/{{PROJECT_NAME}}Core
+  DataLayer:
+    path: Packages/DataLayer
+targets:
+  {{PROJECT_NAME}}:
+    type: application
+    platform: iOS
+    sources: [{{PROJECT_NAME}}]
+    dependencies:
+      - package: {{PROJECT_NAME}}DS
+      - package: {{PROJECT_NAME}}Core
+      - package: DataLayer
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: {{BUNDLE_ID}}
+        SWIFT_VERSION: "6.2"
+        SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1.0

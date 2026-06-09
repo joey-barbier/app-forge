@@ -1,0 +1,35 @@
+{
+  "name": "app-forge",
+  "version": "0.1.0",
+  "description": "Turn Claude Code into an autonomous app factory \u2014 universal architecture core + per-platform best-practice packs (iOS/Swift first), extracted from production apps.",
+  "bin": {
+    "app-forge": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "boilerplate",
+    "scaffold",
+    "architecture",
+    "ios",
+    "swift",
+    "swiftui",
+    "cloudkit",
+    "multi-platform"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joey-barbier/app-forge.git"
+  }
+}
