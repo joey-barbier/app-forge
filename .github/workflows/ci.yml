@@ -1,0 +1,115 @@
+# CI for the AppForge boilerplate.
+#
+# "Proof over claims" applies to the boilerplate itself: every push must prove
+# that nothing project-specific leaked out of the source apps, that the
+# scaffolder produces working projects, and that the templates stay coherent.
+#
+# Jobs:
+#   leakage          — tracked files contain no strings from the source apps
+#   scaffold-core    — unknown platform → universal core only, key files present
+#   scaffold-swift   — swift-ios skeleton builds (DS + DataLayer) and tests (Core)
+#   templates-sanity — placeholders limited to the supported set, manifests valid
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  leakage:
+    name: leakage (no project-specific strings)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Grep tracked files for forbidden strings
+        run: bash .github/scripts/leakage-check.sh
+
+  scaffold-core:
+    name: scaffold-core (unknown platform → core only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Scaffold with a platform that has no pack
+        # --yes auto-confirms "continue with the universal core only". The
+        # identifier prompt still reads stdin, so feed it one newline to accept
+        # its default — with stdin at EOF the CLI exits 0 WITHOUT scaffolding.
+        run: echo "" | node bin/cli.js init TestCore --platform none-existent --yes
+      - name: Assert core-only project layout
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in \
+            TestCore/CLAUDE.md \
+            TestCore/docs-architecture/ARCHITECTURE_PRINCIPLES.md \
+            TestCore/.claude/skills/kickoff/SKILL.md \
+            TestCore/.claude/memory/PROJECT_STATE.md \
+            TestCore/.mcp.json \
+            TestCore/.gitignore
+          do
+            if [ ! -e "$f" ]; then
+              echo "::error::missing $f"
+              fail=1
+            fi
+          done
+          if [ -d TestCore/Packages ]; then
+            echo "::error::core-only scaffold must not contain a platform skeleton"
+            fail=1
+          fi
+          if grep -rnIE --exclude-dir=.git '\{\{[A-Z][A-Z0-9_]*\}\}' TestCore; then
+            echo "::error::unsubstituted placeholder in scaffolded project"
+            fail=1
+          fi
+          if [ "$fail" -eq 0 ]; then
+            echo "Core-only scaffold OK"
+          fi
+          exit "$fail"
+
+  scaffold-swift:
+    name: scaffold-swift (skeleton builds + tests)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Select newest Xcode (templates use swift-tools 6.2 → Xcode 26+)
+        run: |
+          LATEST="$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)"
+          echo "Using $LATEST"
+          sudo xcode-select -s "$LATEST"
+          swift --version
+      - name: Scaffold an iOS project
+        run: node bin/cli.js init TestApp --platform swift-ios --id com.test.app --yes
+      - name: Assert no unsubstituted placeholders
+        run: |
+          if grep -rnIE --exclude-dir=.git '\{\{[A-Z][A-Z0-9_]*\}\}' TestApp; then
+            echo "::error::unsubstituted placeholder in scaffolded project"
+            exit 1
+          fi
+          echo "Placeholders fully substituted"
+      - name: Build the design-system package
+        run: swift build --package-path TestApp/Packages/TestAppDS
+      - name: Build the data-layer package
+        run: swift build --package-path TestApp/Packages/DataLayer
+      - name: Test the core package
+        run: swift test --package-path TestApp/Packages/TestAppCore
+
+  templates-sanity:
+    name: templates-sanity (placeholders + pack manifests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check placeholders and pack.json manifests
+        run: bash .github/scripts/templates-sanity.sh

@@ -159,3 +159,18 @@ General rules:
 3. **New catalog entry?** The consistency test fails until you add the matching enum case + engine rule. That failure is the workflow — don't weaken the test.
 4. **Tests are the spec.** When behavior is ambiguous, the test file is the authority (e.g. "merge can shrink current streak" is documented intent, not a bug). Read the relevant suite before changing an engine.
 5. **Never edit an existing assertion to make your change pass** without understanding why it was written — most encode a fixed production bug. If a behavior change is intentional, update the test *and* its doc comment.
+
+## UI / snapshot tests — when to add them (V2, deliberately not V1)
+MVP skips UI tests on purpose: layouts churn too fast and brittle tests slow every slice. Add them
+when (a) a screen has survived 3+ slices unchanged, or (b) a visual regression actually bit you.
+Then prefer snapshot tests of MODULE bricks (L4 — stable contracts, no navigation) over full-screen
+flows, and keep them in the app target, not the packages. Until then: the simulator screenshot at
+every slice gate IS the UI regression net — actually look at it.
+
+## Concurrency testing (Swift)
+- The Thread Sanitizer is the truth serum: `swift test --sanitize=thread` on packages periodically
+  (it's slow — not every run; before each release at minimum).
+- A concurrency bug fixed = a regression test that reproduces the race (e.g. N concurrent calls via
+  `TaskGroup` asserting a single side effect) — same discipline as any other gotcha.
+- Swift 6 strict concurrency catches data races at compile time; never silence it with
+  `@unchecked Sendable` to make a test pass — fix the isolation instead.

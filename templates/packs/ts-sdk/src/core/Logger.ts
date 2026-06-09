@@ -1,7 +1,7 @@
 /**
  * Ops port — injected logger, silent by default (SDK_CONTRACT.md §5).
  *
- * Zero `console.*` anywhere in src/: the consumer owns the output and the switch.
+ * Zero direct console calls anywhere in src/: the consumer owns the output and the switch.
  * NEVER log token values, Authorization headers, or token-presence booleans —
  * a production team once mapped its whole auth topology into every consumer's
  * devtools that way. Log method + path, nothing from headers.

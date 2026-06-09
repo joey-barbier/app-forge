@@ -1,0 +1,26 @@
+# {{PROJECT_NAME}} — environment template
+#
+# Copy to .env for local development (Vapor loads .env automatically from the working
+# directory). NEVER commit .env or put real production values here.
+#
+# CONTRACT: every variable below has a matching case in AppConfig.Key
+# (Sources/App/Configure/AppConfig.swift) and vice versa — except LOG_LEVEL, which is
+# read in entrypoint.swift BEFORE config exists. scripts/validate-env-vars.sh enforces
+# the cross-check; run it whenever you touch configuration.
+
+# Log level: trace|debug|info|notice|warning|error|critical (never hardcoded in code)
+LOG_LEVEL=debug
+
+# Database (PostgreSQL)
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USERNAME=vapor_username
+DATABASE_PASSWORD=vapor_password
+DATABASE_NAME=vapor_database
+
+# CORS — exact origin of the frontend allowed to call this API
+ALLOWED_ORIGIN=http://localhost:3000
+
+# Monitoring (see docs-architecture/OPS.md)
+MONITORING_ENABLED=false
+METRICS_TOKEN=

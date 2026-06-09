@@ -15,12 +15,15 @@ const path = require("path");
 const readline = require("readline");
 const { execSync } = require("child_process");
 
+const pkg = require("../package.json");
+
 const TEMPLATES = path.join(__dirname, "..", "templates");
 const CORE = path.join(TEMPLATES, "core");
 const PACKS_DIR = path.join(TEMPLATES, "packs");
+const MANIFEST = ".appforge.json";
 
 // Entries renamed on copy (npm strips dotfiles from packages, so templates store them un-dotted).
-const RENAMES = { claude: ".claude", "mcp.json": ".mcp.json", gitignore: ".gitignore" };
+const RENAMES = { claude: ".claude", "mcp.json": ".mcp.json", gitignore: ".gitignore", github: ".github" };
 // Files merged (not overwritten) when both core and pack provide them.
 const MERGED = new Set(["mcp.json", "gitignore"]);
 
@@ -131,6 +134,10 @@ async function init(args) {
   fs.mkdirSync(dest, { recursive: true });
   copyTree(CORE, dest, vars); // universal bricks
   if (pack) copyTree(pack.dir, dest, vars); // platform bricks (override core, merge mcp/gitignore)
+  fs.writeFileSync(
+    path.join(dest, MANIFEST),
+    JSON.stringify({ version: pkg.version, pack: pack ? pack.id : null, projectName: name, bundleId }, null, 2) + "\n"
+  ); // update manifest — lets `app-forge update` re-render knowledge files later
 
   try {
     execSync("git init -q", { cwd: dest });
@@ -150,13 +157,130 @@ Installed bricks:
   .claude/skills/                  /kickoff, /product-owner, /restore-context, /save-context
   .claude/memory/                  Persistent project memory (anti-hallucination)
   .mcp.json                        MCP servers (context7 docs${pack ? " + platform tooling" : ""})
+  .appforge.json                   Update manifest — \`npx app-forge update\` refreshes docs/skills later
 ${pack?.requirements?.length ? "\nRequirements: " + pack.requirements.join(" · ") : ""}${pack?.notes ? "\n" + pack.notes.replaceAll("{{PROJECT_NAME}}", name) : ""}
 `);
+}
+
+// --- update -----------------------------------------------------------------
+// Knowledge evolves (new gotchas, fixed docs, improved skills); `app-forge update`
+// re-renders the boilerplate-OWNED files from the current templates without ever
+// touching what the user owns after init (.claude/memory/**, source code, config).
+const OWNED = (rel) => rel === "CLAUDE.md" || rel.startsWith("docs-architecture/") || rel.startsWith(".claude/skills/");
+
+function collectOwned(src, rel, vars, out) {
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    if (entry.name === "pack.json") continue; // manifest, not project content
+    const renamed = RENAMES[entry.name] ?? entry.name;
+    const target = rel ? `${rel}/${substitute(renamed, vars)}` : substitute(renamed, vars);
+    if (entry.isDirectory()) collectOwned(path.join(src, entry.name), target, vars, out);
+    else if (OWNED(target)) out.set(target, substitute(fs.readFileSync(path.join(src, entry.name), "utf8"), vars));
+  }
+  return out;
+}
+
+function listFiles(dir, rel, out) {
+  if (!fs.existsSync(dir)) return out;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) listFiles(path.join(dir, entry.name), `${rel}/${entry.name}`, out);
+    else out.push(`${rel}/${entry.name}`);
+  }
+  return out;
+}
+
+async function update(args) {
+  const flag = (name) => {
+    const i = args.indexOf(name);
+    return i !== -1 ? args[i + 1] : undefined;
+  };
+  const root = process.cwd();
+  const manifestPath = path.join(root, MANIFEST);
+  const packs = loadPacks();
+
+  // 1. Manifest — written at init; rebuildable from flags for older projects.
+  let manifest;
+  if (fs.existsSync(manifestPath)) {
+    try {
+      manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    } catch {
+      console.error(`✗ ${MANIFEST} is not valid JSON — fix or delete it, then re-run with --pack.`);
+      process.exit(1);
+    }
+  } else if (flag("--pack")) {
+    const wanted = flag("--pack");
+    if (wanted !== "none" && !packs.some((p) => p.id === wanted)) {
+      console.error(`✗ Unknown pack "${wanted}". Available: ${packs.map((p) => p.id).join(", ")} (or "none" for core only).`);
+      process.exit(1);
+    }
+    const name = flag("--name") ?? path.basename(root);
+    manifest = { version: "pre-manifest", pack: wanted === "none" ? null : wanted, projectName: name, bundleId: flag("--id") ?? `com.example.${name.toLowerCase()}` };
+    console.log(`   (no ${MANIFEST} — rebuilt from flags as ${manifest.projectName} / ${manifest.bundleId}; written on apply)`);
+  } else {
+    console.error(`✗ No ${MANIFEST} here — this project predates update support (or wasn't made by app-forge).
+  Re-run with --pack <id> ("none" for core only; see \`app-forge packs\`), plus optional
+  --name <ProjectName> --id <bundle.id>, and the manifest will be created on apply.`);
+    process.exit(1);
+  }
+
+  // 2. Pack — may have been renamed/removed since init; fall back to core only.
+  let pack = null;
+  if (manifest.pack) {
+    pack = packs.find((p) => p.id === manifest.pack) ?? null;
+    if (!pack) console.log(`⚠️  Pack "${manifest.pack}" no longer ships with app-forge ${pkg.version} — updating universal core files only; pack-owned docs stay as they are.`);
+  }
+
+  // 3. Re-render owned files from current templates (same substitutions as init).
+  const vars = { name: manifest.projectName, bundleId: manifest.bundleId, packLabel: pack ? pack.label : "none (universal core only)" };
+  const desired = collectOwned(CORE, "", vars, new Map());
+  if (pack) collectOwned(pack.dir, "", vars, desired); // pack overrides core, like init
+
+  // 4. Diff by content against the project.
+  const added = [], changed = [], unchanged = [];
+  for (const rel of [...desired.keys()].sort()) {
+    const file = path.join(root, rel);
+    if (!fs.existsSync(file)) added.push(rel);
+    else if (fs.readFileSync(file, "utf8") !== desired.get(rel)) changed.push(rel);
+    else unchanged.push(rel);
+  }
+  const kept = [...listFiles(path.join(root, "docs-architecture"), "docs-architecture", []), ...listFiles(path.join(root, ".claude", "skills"), ".claude/skills", [])]
+    .filter((rel) => !desired.has(rel))
+    .sort();
+
+  console.log(`\n🔄 ${manifest.projectName}${pack ? ` [${pack.id}]` : " [core only]"} — manifest ${manifest.version}, templates ${pkg.version}\n`);
+  added.forEach((rel) => console.log(`  + added      ${rel}`));
+  changed.forEach((rel) => console.log(`  ~ changed    ${rel}`));
+  unchanged.forEach((rel) => console.log(`  = unchanged  ${rel}`));
+  kept.forEach((rel) => console.log(`  · kept       ${rel} (not template-owned — left intact)`));
+
+  const pending = [...added, ...changed];
+  if (!pending.length) {
+    console.log(`\n✅ Knowledge files already match templates ${pkg.version}. Nothing to do.`);
+    return;
+  }
+
+  // 5. Dry run by default; --apply (or interactive y) writes.
+  let apply = args.includes("--apply");
+  if (!apply && process.stdin.isTTY) {
+    apply = /^y(es)?$/i.test(await ask(`\nApply ${pending.length} file(s)? Memory, source code and config are never touched. [y/N]`, "N"));
+  }
+  if (!apply) {
+    console.log(`\n   Dry run — nothing written. Re-run with --apply to update the ${pending.length} file(s) above.`);
+    return;
+  }
+  for (const rel of pending) {
+    const file = path.join(root, rel);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, desired.get(rel));
+  }
+  fs.writeFileSync(manifestPath, JSON.stringify({ ...manifest, version: pkg.version }, null, 2) + "\n");
+  console.log(`\n✅ Updated ${pending.length} file(s) to templates ${pkg.version} (${MANIFEST} bumped).`);
 }
 
 const [, , command, ...rest] = process.argv;
 if (command === "init") {
   init(rest);
+} else if (command === "update") {
+  update(rest);
 } else if (command === "packs") {
   const packs = loadPacks();
   console.log("Available platform packs:");
@@ -166,6 +290,7 @@ if (command === "init") {
 
 Usage:
   npx app-forge init <ProjectName> [--platform swift-ios] [--id com.me.app] [--yes]
+  npx app-forge update [--apply]      (inside a generated project — refresh docs/skills, never your code or memory)
   npx app-forge packs
 `);
   if (command) process.exit(1);

@@ -1,0 +1,7 @@
+.build/
+.swiftpm/
+.env
+.env.*
+db.sqlite*
+xcuserdata/
+DerivedData/

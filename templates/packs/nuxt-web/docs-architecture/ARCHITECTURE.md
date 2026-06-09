@@ -72,11 +72,17 @@ app/designSystem/DSButton/          app/features/Checkout/
 
 ```ts
 components: [
-  { path: '~/designSystem/**/components', pathPrefix: false },
-  { path: '~/features/**/components',     pathPrefix: false },
+  { path: '~/designSystem', pattern: '**/components/**', pathPrefix: false },
+  { path: '~/features',     pattern: '**/components/**', pathPrefix: false },
 ],
 imports: { dirs: ['~/designSystem/**/composables', '~/features/**/composables'] },
 ```
+
+> ⚠️ **Gotcha:** Symptom — every DS component renders as an empty comment node, no error
+> anywhere. Cause — the glob was put in `path` (`path: '~/designSystem/**/components'`);
+> the scanner ignores glob-in-path **silently** and registers nothing. Fix — directory in
+> `path`, glob in `pattern` (as above). Verify after config changes:
+> `grep DSButton .nuxt/components.d.ts`.
 
 - Components auto-register by file name (`<DSButton />` in any template).
 - **Everything else crosses module boundaries through the barrel**:
