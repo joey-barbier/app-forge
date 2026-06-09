@@ -38,7 +38,7 @@ function onClick(event: MouseEvent) {
   font: var(--ds-font-body);
   padding: var(--ds-space-2) var(--ds-space-4);
   border-radius: var(--ds-radius-m);
-  border: 1px solid transparent;
+  border: var(--ds-border-width) solid transparent;
   cursor: pointer;
   transition: background-color 120ms ease, opacity 120ms ease;
 }

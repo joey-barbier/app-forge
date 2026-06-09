@@ -1,4 +1,5 @@
 import Fluent
+import Foundation
 import {{PROJECT_NAME}}Foundation
 
 extension App.Item {

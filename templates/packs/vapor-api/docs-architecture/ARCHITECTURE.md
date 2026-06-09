@@ -46,7 +46,7 @@ Notes on the mapping:
 Grep checks (run them when in doubt — empty output = healthy):
 ```bash
 grep -rn "query(on:" Sources/App/Features/*/Controllers/   # controllers bypassing services
-grep -rn "Request" Sources/App/Features/*/Services/        # services seeing HTTP
+grep -rn "import Vapor" Sources/App/Features/*/Services/   # services seeing HTTP (Request/Response live in Vapor)
 grep -rn "App.Failed" Sources/App/Features/*/Repositories/ # repositories making decisions
 grep -rn "URLSession" Sources/                             # forbidden — GOTCHAS_LINUX_SWIFT.md
 ```

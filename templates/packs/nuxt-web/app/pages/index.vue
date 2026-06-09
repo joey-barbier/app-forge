@@ -26,7 +26,7 @@ const clicks = ref(0)
 <style scoped>
 /* Tokens only — see app/assets/css/tokens.css (L0). */
 .home {
-  max-width: 640px;
+  max-width: var(--ds-size-content-max);
   margin: 0 auto;
   padding: var(--ds-space-8) var(--ds-space-4);
   display: grid;

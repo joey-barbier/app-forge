@@ -25,10 +25,14 @@
   --ds-space-6: 1.5rem;
   --ds-space-8: 2rem;
 
-  /* radius */
+  /* radius & borders */
   --ds-radius-s: 4px;
   --ds-radius-m: 8px;
   --ds-radius-l: 16px;
+  --ds-border-width: 1px;
+
+  /* sizes */
+  --ds-size-content-max: 40rem;
 
   /* typography */
   --ds-font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

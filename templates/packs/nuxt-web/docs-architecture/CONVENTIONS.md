@@ -28,7 +28,7 @@ Rules:
 > ⚠️ **Gotcha:** Symptom — `import { MY_CONST } from './types/foo'` is `undefined` at runtime.
 > Cause — consts were authored in a `.d.ts` file; declaration files emit no JavaScript and most
 > pipelines silently skip them. Fix — module types live in **plain `.ts`** files; reserve `.d.ts`
-> for ambient declarations only (e.g. `window.plausible`).
+> for ambient declarations only (e.g. `window.yourProvider` — OPS_WEB.md §1).
 
 ## 2. Naming
 
