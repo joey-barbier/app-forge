@@ -1,0 +1,18 @@
+# Nuxt
+.nuxt/
+.output/
+dist/
+node_modules/
+
+# env — never commit real env files
+.env
+.env.*
+
+# test artifacts — generated reports are claims, not proof (ANTI_PATTERNS.md #10)
+coverage/
+playwright-report/
+test-results/
+
+# misc
+*.log
+.cache/

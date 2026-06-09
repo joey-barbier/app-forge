@@ -235,3 +235,12 @@ cd Packages/{{PROJECT_NAME}}DS && swift build
 xcodebuild -project "{{PROJECT_NAME}}/{{PROJECT_NAME}}.xcodeproj" -scheme {{PROJECT_NAME}} \
   -destination 'generic/platform=iOS Simulator' build                  # app assembly only
 ```
+
+
+## Acceptable variations
+The Store-internal `bootstrap()` shown above is the default, not dogma. Known-good variants:
+- **Protocol-based init injection** (`Store(repository: some ItemRepository)`) — preferred by
+  teams that want the composition root outside the Store. Fine: record it in
+  `.claude/memory/DECISIONS.md` and keep ONE pattern per project.
+Deviating consciously is healthy; deviating silently is how two conventions end up in one repo
+(see ANTI_PATTERNS.md).

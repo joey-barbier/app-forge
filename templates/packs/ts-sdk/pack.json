@@ -1,0 +1,11 @@
+{
+  "id": "ts-sdk",
+  "label": "TypeScript SDK — typed client between API and front(s)",
+  "languages": ["typescript"],
+  "idPrompt": "Package name (npm-style, e.g. @org/myapp-sdk)",
+  "requirements": [
+    "Node.js 20+ (built-in fetch)",
+    "npm 10+"
+  ],
+  "notes": "SDK builds and tests day one: npm install && npm run build && npm test"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "nuxt-web",
+  "label": "Web app — Nuxt 4 / Vue 3 / TypeScript",
+  "languages": ["typescript", "vue"],
+  "idPrompt": "App identifier (reverse-DNS)",
+  "requirements": [
+    "Node.js 20+ (LTS) and npm",
+    "Playwright browsers for e2e (one-time): npx playwright install"
+  ],
+  "notes": "Skeleton builds and tests day one: npm install && npm run test && npm run build"
+}

@@ -31,6 +31,12 @@ Each slice gets a short blueprint before code: goal, files per layer, test plan,
 
 ## Validation etiquette (the trust contract)
 
+- **Executed-output only**: any value presented as produced by the code (durations, counts, demo
+  strings) must come from actually executed output. Didn't run it? Label it an estimate.
+- **Commit at every gate and slice completion** (`add/update/fix(scope) - description`). Gate
+  discipline must be provable from git history — two delivered slices sitting untracked on main
+  is an audit failure.
+
 - **Never claim done without proof.** Tests green + build green + visual/behavioral proof.
 - **Failures are reported with output**, not narrated away. A skipped step is stated as skipped.
 - **Layer tests before app builds** — they're orders of magnitude faster and more precise.

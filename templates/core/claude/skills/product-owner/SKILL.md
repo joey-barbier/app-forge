@@ -17,11 +17,16 @@ cannot infer:
 2. **Persona** — who is this for; what's the single moment of delight?
 3. **v1 must-haves** — cap at 5 features. Everything else is v2 (say so explicitly).
 4. **Data reality** — local-only, cloud sync, shared/collaborative, external APIs?
+   **Always attach a recommended default** ("if unsure: private cloud sync — free, no server,
+   survives reinstalls"). Non-technical users can't answer this raw — a question without a
+   default stalls them; experts just override the default.
 5. **Differentiators** — gamification (ranks/streaks/achievements), social (groups/sharing),
    monetization? (Proven patterns exist for these — flag which apply.)
 6. **Fixed constraints** — name, brand/visual vibe, deadlines, platforms.
 
 Challenge weak answers once ("feature 4 and 5 both serve power users — which one earns v1?").
+If the user signals they are non-technical ("je ne code pas", product-only vocabulary): phrase
+every technical question as a recommendation to accept or reject, never an open choice.
 
 **Example** — user says *"an app where friends share book recommendations"* → you ask (one message):
 core loop ("what does someone do daily — browse friends' shelves? log a book?"), persona, the 5

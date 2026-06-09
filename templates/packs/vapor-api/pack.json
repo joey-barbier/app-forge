@@ -1,0 +1,11 @@
+{
+  "id": "vapor-api",
+  "label": "Swift API — Vapor 4 / Fluent / PostgreSQL",
+  "languages": ["swift"],
+  "idPrompt": "Service identifier",
+  "requirements": [
+    "Swift 6 toolchain (Xcode 16+ or swift.org toolchain)",
+    "Docker (local PostgreSQL, production image builds, Linux test runs)"
+  ],
+  "notes": "Boots day one: `swift test` runs the full stack on in-memory SQLite — no database needed. First real run: `cp env_dist .env`, start a local PostgreSQL, `swift run App serve`."
+}

@@ -147,6 +147,14 @@ Scope feature views inside the domain type they render; scope screens inside `Ap
 extension Item      { struct DetailCard: View { … } }  // call site: Item.DetailCard(item:)
 extension ItemGroup { struct InviteCard: View { … } }  // call site: ItemGroup.InviteCard(group:…)
 extension App       { struct Feed: View { … } }        // call site: App.Feed()
+
+> ⚠️ **Gotcha:** the `App` namespace collides with the `SwiftUI.App` protocol. Two rules make it
+> safe: (1) declare the namespace once — `enum App {}` in `App/AppNamespace.swift` (the scaffold
+> ships it); (2) the @main entry point must be declared `struct {{PROJECT_NAME}}App: SwiftUI.App`
+> (fully qualified) or it won't compile.
+> ⚠️ **Gotcha:** a multi-statement `var body: some View` inside an `extension App.X` silently
+> loses the implicit `@ViewBuilder` in some configurations — annotate `@ViewBuilder var body`
+> explicitly in extension-scoped views, or keep `body` a single expression.
 ```
 
 - File name = call-site path without the dot: `ItemDetailCard.swift`, `AppFeed.swift`, `AppFeed+Translate.swift`. **One type per file.**
@@ -223,3 +231,15 @@ log.notice("bootstrap: backend=\(label, privacy: .public) items=\(items.count)")
 - Extension files: `TypeName+Role.swift` (`AppFeed+Translate.swift`).
 - Centralize magic values: design tokens in `DS.Padding/Radius/Size`, the app display name and container IDs in single constants.
 - Comments explain **why** (the decision, the side effect, the trap), never what the code already says.
+
+
+## One type per file — the sanctioned exception
+A repository **contract and its InMemory reference implementation may share one file**
+(`Repository/ItemRepository.swift`): they form one teaching unit and ship/replace together.
+Everything else stays one type per file. (Generated code violated the strict rule in every
+audited project — codifying the exception beats pretending.)
+
+> ⚠️ **Gotcha (previews):** Symptom — a preview renders empty while the app works. Cause — the
+> preview built TWO store instances (one injected into the view, a different one bootstrapped
+> with data). Fix — create ONE `Store.preview()` instance, seed it, and inject THAT everywhere
+> in the preview.

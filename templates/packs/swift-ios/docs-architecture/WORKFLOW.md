@@ -7,7 +7,8 @@ How to ship features in {{PROJECT_NAME}}. Prescriptive. Follow exactly.
 Ship **vertical slices**: thin end-to-end features (UI → domain → persistence), never horizontal layers across the whole app. One slice = one shippable increment validated on simulator.
 
 **Per slice:**
-1. **Blueprint first** — write `docs/SLICE<N>_BLUEPRINT.md` before any code. Must contain:
+1. **Blueprint first** — write the slice's blueprint as a section of `docs/SLICES.md` before any
+   code (single canonical file — per-slice standalone files drift). Must contain:
    - The key architectural decision for the slice (e.g. "one CKRecordZone per Group, root record carries the CKShare") and why alternatives were rejected.
    - Phases mapped to layers, each with an explicit file list (`NEW`/`MODIFY`) and signatures.
    - A "Gotchas" section (known traps for the APIs involved).
@@ -118,3 +119,32 @@ Rules:
 > ⚠️ **Gotcha — orphaned popover after deleting its anchor:** deleting an item from its own anchored popover left the popover floating (anchor gone), blocked selecting other items, and made the deleted marker "re-pop" while panning (SwiftUI recreated the annotation to serve the anchor). Fix: the detail card dismisses itself via `@Environment(\.dismiss)` on delete, AND the map clears `selectedID` in `onChange(of: items.ids)` when the selected item disappears. Verify deletion flows by actually deleting on the simulator — this class of bug is invisible to builds and unit tests.
 
 > ⚠️ **Gotcha — UITests welded to display copy:** UITests matching localized button text break on every rewording. Put stable `accessibilityIdentifier`s on test-critical controls (FABs, tabs, primary CTAs, markers) and match those; keep `accessibilityLabel` for VoiceOver.
+
+
+## Tooling gate (run BEFORE Phase 1 of any kickoff — hard stop, not a parting note)
+```bash
+xcodegen --version                                   # required to generate the .xcodeproj
+xcrun simctl list runtimes | grep iOS                # a runtime must match project.yml's deploymentTarget
+```
+Missing tool → tell the user the one-line install NOW (`brew install xcodegen`) and agree on the
+degraded-proof plan below before writing any code. Never discover this mid-build.
+
+## Degraded-proof ladder (no .xcodeproj / no simulator available)
+L5 app-target sources cannot be left "written but never compiled" — that shipped a broken screen
+once. When `xcodegen`/simulator are unavailable, the MINIMUM proof is:
+```bash
+# 1. Build each package for the simulator (works WITHOUT an .xcodeproj — xcodebuild understands SPM):
+cd Packages/{{PROJECT_NAME}}DS && xcodebuild -scheme {{PROJECT_NAME}}DS \
+  -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/dd build
+# (repeat for Core and DataLayer)
+# 2. Typecheck the app-target sources against those products:
+xcrun swiftc -typecheck -sdk $(xcrun --sdk iphonesimulator --show-sdk-path) \
+  -target arm64-apple-ios26.0-simulator \
+  -I /tmp/dd/Build/Products/Debug-iphonesimulator {{PROJECT_NAME}}/**/*.swift
+```
+Report which rung was reached (simulator screenshot > app build > typecheck > package tests).
+A lower rung is acceptable ONLY if stated explicitly in the slice report and logged as debt.
+
+> ⚠️ **Gotcha:** Symptom — a demo value ("~12 min", "5 items") presented as "computed by the
+> engine" turns out fabricated. Rule — any number/string attributed to code must come from
+> actually executed output (test log, REPL, app run). If you didn't run it, label it an estimate.

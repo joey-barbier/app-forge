@@ -15,8 +15,10 @@ follow every gate below. Do not skip phases. Do not start coding before Phase 3 
      commands actually work), write it to `.claude/memory/COMMANDS.md`, and tell the user best-practice
      coverage is reduced for this stack.
 3. Read `.claude/memory/*.md` — if a PRD/slice plan already exists, resume instead of restarting.
-4. Verify tooling: MCP servers from `.mcp.json` respond (docs lookup, simulator/emulator control where
-   relevant). Missing tool → tell the user the one-line fix now, don't discover it mid-build.
+4. **Hard tooling gate**: verify the pack's `requirements` by RUNNING their commands (version
+   checks), and that MCP servers from `.mcp.json` respond. Missing tool → give the one-line
+   install NOW and agree on the degraded-proof plan (the pack's WORKFLOW.md defines the proof
+   ladder) BEFORE Phase 1. Never discover tooling gaps mid-build.
 
 ## Phase 1–2 — Product (delegate to the PO)
 Run the **`product-owner` skill**: one focused interview → `docs/PRD.md` (lean, ≤150 lines, with
@@ -49,10 +51,16 @@ Follow `DELIVERY.md` §"The build loop" exactly, with the platform pack's comman
 4. L5 Feature: screen assembly, store wiring, navigation per the pack's navigation doc.
 5. Full app build; fix until green.
 6. **Eyes-on proof**: run it (simulator MCP / browser / curl), navigate to the feature, capture and
-   actually inspect the proof (layout, dark mode, empty states, error states).
+   actually inspect the proof (layout, dark mode, empty states, error states). No simulator
+   available → climb down the pack's degraded-proof ladder and SAY which rung you reached.
+   Any value you attribute to the code (counts, durations, demo strings) must come from executed
+   output — never fabricate a demo number.
 7. Memory update: `PROJECT_STATE.md` (done/todo/gotchas) + `DECISIONS.md` for any choice a future
-   session must not re-litigate.
-8. Report the slice with its proof, then continue to the next slice.
+   session must not re-litigate. **Then commit** (`add/update/fix(scope) - description`) — every
+   gate and every slice leaves a commit; untracked delivered work is an audit failure.
+8. Report the slice with its proof — for a non-technical owner, translate it into product terms
+   ("your two requirements are now automated tests named X and Y", screenshot when possible),
+   not raw test logs. Then continue to the next slice.
 
 Stop and ask ONLY when: a slice's scope is genuinely ambiguous, a paid/external dependency appears,
 or the user must act (store consoles, certificates, cloud dashboard schema deploys, real-device tests).
