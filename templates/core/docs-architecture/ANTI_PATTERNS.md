@@ -2,8 +2,14 @@
 
 Every entry below was found in production code and verified — none is hypothetical.
 Treat this as a pre-flight checklist: before shipping a cache layer, an auth middleware,
-a config provider or a doc, scan the matching section. **Add your own entries with
-evidence** (file, symptom you observed, fix you shipped) — no evidence, no entry.
+a config provider or a doc, scan the matching section.
+
+> **This register is template-owned and curated.** It ships read-only and is refreshed when
+> you run `update --apply` — **edits made here are overwritten on the next update.** Do NOT add
+> your project's own incidents to this file. When you hit a real anti-pattern in THIS project,
+> record it in the **gotchas log in `.claude/memory/PROJECT_STATE.md`** (symptom → cause → fix) —
+> that file is yours and `update` never touches it. Worth-generalizing lessons can be proposed
+> upstream to this register; they don't live in your local copy.
 
 Layer references (L0–L5) follow ARCHITECTURE_PRINCIPLES.md. Proof discipline follows
 DELIVERY.md. Format per entry: **Symptom → Why it bites → Fix.**
@@ -159,11 +165,16 @@ DELIVERY.md. Format per entry: **Symptom → Why it bites → Fix.**
 
 ---
 
-## Adding an entry
+## Recording an anti-pattern you hit
+
+Your incidents go in **`.claude/memory/PROJECT_STATE.md`** (gotchas log), never in this
+template-owned file — `update --apply` would erase an edit here.
 
 1. It happened **here**, in real code — link the commit or file.
-2. Write it as symptom → why it bites → fix, 3–6 lines. Generic names, no blame.
-3. If the fix changed a layer rule or convention, record it in DECISIONS.md too.
+2. Write it as symptom → cause → fix, 3–6 lines. Generic names, no blame.
+3. If the fix changed a layer rule or convention, record it in `.claude/memory/DECISIONS.md` too.
+4. If the lesson is broadly reusable across projects, propose it upstream so a future `update`
+   ships it to this curated register for everyone.
 
-> ⚠️ **Gotcha:** the register only works if entries stay falsifiable. "Avoid bad caching"
-> teaches nothing; "per-process hash seed broke ETags across replicas" prevents a repeat.
+> ⚠️ **Gotcha:** an entry only works if it stays falsifiable. "Avoid bad caching" teaches
+> nothing; "per-process hash seed broke ETags across replicas" prevents a repeat.

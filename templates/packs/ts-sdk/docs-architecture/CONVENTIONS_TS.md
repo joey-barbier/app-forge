@@ -87,8 +87,12 @@ The contract is SDK_CONTRACT.md §3; the local law:
   timeout that rejects (never hang waiters forever).
 - On 401: join/start the refresh, then retry the original request **exactly once**. Two
   retries hide real auth breakage; zero retries logs users out on every token expiry.
-- On refresh failure or timeout: **clear all tokens and fail every waiter** — a
-  half-authenticated session is worse than a logout.
+- On any refresh failure: **fail every waiter** — a half-authenticated session is worse than
+  a clean error. But **clear tokens ONLY on a real auth rejection** (a 401, or a 400 carrying
+  `invalid_grant`): that is the server's verdict that the refresh token is dead. A transport
+  failure — offline, DNS, connection refused, timeout (`RefreshTimeout`/408), or 5xx — never
+  reached a verdict, so the tokens are **kept**; clearing them would force a gratuitous logout
+  on a session that may still be valid (this matches §5: network failures propagate as-is).
 - The refresh call uses the raw transport, never the secure `request()` path (a 401 from
   the refresh endpoint must not recurse).
 - `tests/singleFlight.test.ts` pins all of this against a fake API with *single-use*

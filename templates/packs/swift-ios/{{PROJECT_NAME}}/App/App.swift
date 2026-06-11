@@ -6,6 +6,9 @@ struct {{PROJECT_NAME}}App: SwiftUI.App {   // qualified: `App` (unqualified) is
     var body: some Scene {
         WindowGroup {
             RootView()
+                // Dark-first: lock the scheme so system chrome (sheets, alerts, keyboard) matches
+                // the dark token palette — see docs-architecture/DESIGN_SYSTEM.md.
+                .preferredColorScheme(.dark)
         }
     }
 }

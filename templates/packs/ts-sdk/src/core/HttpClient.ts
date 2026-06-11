@@ -62,7 +62,24 @@ export class HttpClient implements HttpTransport {
     if (!response.ok) {
       throw ApiError.fromResponse(response.status, await response.text());
     }
-    if (response.status === 204) return undefined as T;
-    return (await response.json()) as T;
+
+    // No-body responses: 204/205, or any 2xx whose body is empty or not JSON. Calling
+    // response.json() on those throws a raw SyntaxError that escapes the ApiError contract
+    // (consumers expect either T or an ApiError, never a SyntaxError). Read the text once,
+    // return undefined when there is nothing to parse, parse only genuine JSON.
+    if (response.status === 204 || response.status === 205) return undefined as T;
+
+    const contentType = response.headers.get('content-type') ?? '';
+    const text = await response.text();
+    if (text.length === 0) return undefined as T;
+    if (!contentType.includes('json')) return undefined as T;
+
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      // A JSON content-type with an unparseable body is a malformed success response;
+      // surface it as a typed ApiError instead of leaking the SyntaxError.
+      throw ApiError.fromResponse(response.status, text);
+    }
   }
 }

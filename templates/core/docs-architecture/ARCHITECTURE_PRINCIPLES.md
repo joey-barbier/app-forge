@@ -31,16 +31,19 @@ imports a sibling feature), never upward.
 ```
 L5 → L4, L3, L2, L1, L0
 L4 → L3, L2, L1, L0
-L3 → L2*, L1, L0
-L2 → L1, L0  (* + the one sanctioned upward arrow below)
+L3 → L1, L0                       (L3 never imports L2 — it stays IO-free)
+L2 → L3 contracts*, L1, L0        (* the one sanctioned upward arrow — see below)
 L1 → L0
 L0 → nothing
 ```
 
-> **The one sanctioned upward arrow — ports & adapters.** Core Logic (L3) declares the
-> repository **contracts** (interfaces) and the domain models it needs; Data (L2) *implements*
-> those contracts. That implementation import (L2 → L3 contracts) is the only upward arrow
-> allowed, and it may touch **interfaces and models only — never services or engines**.
+> **The one sanctioned upward arrow — ports & adapters.** The only arrow that points up is
+> **L2 → L3**, and even that is narrow. Core Logic (L3) declares the repository **contracts**
+> (interfaces) and the domain models it needs; Data (L2) *implements* those contracts, so L2
+> imports them. **L3 itself never imports L2** — it knows nothing of the IO layer; it depends
+> only on its own contracts, which L2 satisfies. That implementation import (L2 → L3 contracts)
+> is the only upward arrow allowed, and it may touch **interfaces and models only — never
+> services or engines**.
 > Why: tests and previews run against an InMemory implementation of the contract without
 > dragging in CloudKit/HTTP/ORM; the real backend stays swappable.
 

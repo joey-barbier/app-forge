@@ -1,3 +1,4 @@
+import Foundation
 import Vapor
 import Prometheus
 import Metrics
@@ -27,11 +28,30 @@ extension Application {
     }
 }
 
+/// Raised at boot when monitoring is enabled but the bearer token is missing/blank.
+/// Surfaced as a named failure instead of a silent /metrics 401 forever (fail-fast doctrine).
+public struct MonitoringConfigurationError: Error, CustomStringConvertible {
+    public let description: String
+    public init(_ description: String) { self.description = description }
+}
+
 /// Wire monitoring into the app. Disabled → no registry in storage → /metrics returns 503.
-public func configureMonitoring(app: Application, enabled: Bool, metricsToken: String) {
+///
+/// Fail fast: with monitoring ENABLED, an empty/blank `metricsToken` would make a
+/// constant-time compare against "" reject every request — /metrics 401 forever, a silent
+/// misconfiguration that contradicts the env-discipline doctrine. We refuse to boot instead.
+public func configureMonitoring(app: Application, enabled: Bool, metricsToken: String) throws {
     guard enabled else {
         app.logger.info("[MONITORING] disabled")
         return
+    }
+
+    guard !metricsToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        throw MonitoringConfigurationError(
+            "MONITORING_ENABLED is true but METRICS_TOKEN is empty — set a non-empty token in "
+            + ".env AND env_dist AND every deploy manifest (an empty token leaves /metrics 401 "
+            + "forever). Disable monitoring or provide the token, then re-run."
+        )
     }
 
     app.storage[Application.PrometheusRegistryKey.self] = MetricsRegistry.shared

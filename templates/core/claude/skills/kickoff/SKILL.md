@@ -15,11 +15,19 @@ follow every gate below. Do not skip phases. Do not start coding before Phase 3 
      commands actually work), write it to `.claude/memory/COMMANDS.md`, and tell the user best-practice
      coverage is reduced for this stack.
 3. Read `.claude/memory/*.md` — if a PRD/slice plan already exists, resume instead of restarting.
-4. **Hard tooling gate**: verify the pack's `requirements` by RUNNING their commands (version
-   checks), and that MCP servers from `.mcp.json` respond. Missing tool → STOP: give the
-   one-line install and ask the user to run it (or approve the degraded-proof plan from the
-   pack's WORKFLOW.md ladder — their explicit choice, recorded in DECISIONS.md). Building a
-   whole project that ends with "zero pixels ever seen" is not a default anyone chose.
+4. **Tooling gate** — split by severity:
+   - **Build/run tooling (hard STOP).** Verify the pack's **documented** requirements (read
+     them from its `CLAUDE.md` / `COMMANDS.md` — there is no `pack.json` in a generated project)
+     by RUNNING their commands (version checks). A missing build tool → STOP: give the one-line
+     install and ask the user to run it (or approve a reduced-proof plan — if the pack provides a
+     `WORKFLOW.md` / proof ladder, follow it; otherwise agree a plan and record it in
+     `.claude/memory/DECISIONS.md`). Building a whole project that ends with "zero pixels ever
+     seen" is not a default anyone chose.
+   - **Docs/MCP servers (WARNING, not STOP).** Check that MCP servers from `.mcp.json` respond.
+     A missing or non-responding **docs** MCP (e.g. context7) is a WARNING: note it, tell the
+     user docs lookups are degraded, and continue. (Caveat: a bare `npx` command can fail to
+     start on native Windows because npm installs a `.cmd` shim — if the docs MCP won't launch
+     there, that's the likely cause; it's not a blocker.) Only build tooling earns a hard STOP.
 
 ## Phase 1–2 — Product (delegate to the PO)
 Run the **`product-owner` skill**: one focused interview → `docs/PRD.md` (lean, ≤150 lines, with
@@ -54,8 +62,10 @@ Follow `DELIVERY.md` §"The build loop" exactly, with the platform pack's comman
 4. L5 Feature: screen assembly, store wiring, navigation per the pack's navigation doc.
 5. Full app build; fix until green.
 6. **Eyes-on proof**: run it (simulator MCP / browser / curl), navigate to the feature, capture and
-   actually inspect the proof (layout, dark mode, empty states, error states). No simulator
-   available → climb down the pack's degraded-proof ladder and SAY which rung you reached.
+   actually inspect the proof (layout, dark mode, empty states, error states). Full eyes-on proof
+   not possible (no simulator/emulator/headless runner) → if the pack provides a degraded/reduced-proof
+   ladder, climb down it; otherwise fall back to the strongest proof the stack allows (integration
+   test, logs, response capture) and SAY explicitly which rung you reached.
    Any value you attribute to the code (counts, durations, demo strings) must come from executed
    output — never fabricate a demo number.
 7. Memory update: `PROJECT_STATE.md` (done/todo/gotchas) + `DECISIONS.md` for any choice a future

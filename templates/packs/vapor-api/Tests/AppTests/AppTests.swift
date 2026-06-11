@@ -1,6 +1,8 @@
 import Testing
 import VaporTesting
+import Vapor
 @testable import App
+@testable import Monitoring
 
 @Suite("{{PROJECT_NAME}} API — boot + contracts")
 struct AppTests {
@@ -73,6 +75,59 @@ struct AppTests {
                 }, afterResponse: { res async in
                     #expect(res.status == expected)
                 })
+            }
+        }
+    }
+
+    @Test("Monitoring enabled with an EMPTY token fails fast at boot (no silent /metrics 401)")
+    func monitoringEmptyTokenFailsFast() async throws {
+        let app = try await Application.make(.testing)
+        do {
+            #expect(throws: MonitoringConfigurationError.self) {
+                try configureMonitoring(app: app, enabled: true, metricsToken: "")
+            }
+            #expect(throws: MonitoringConfigurationError.self) {
+                try configureMonitoring(app: app, enabled: true, metricsToken: "   ")
+            }
+            // Disabled → blank token is fine (no metrics endpoint).
+            #expect(throws: Never.self) {
+                try configureMonitoring(app: app, enabled: false, metricsToken: "")
+            }
+        } catch {
+            try? await app.asyncShutdown()
+            throw error
+        }
+        try await app.asyncShutdown()
+    }
+
+    @Test("Duplicate name under concurrency → exactly one insert, the rest 409 (DB unique constraint)")
+    func duplicateNameRace() async throws {
+        try await withApp { app in
+            // Fire many concurrent creates of the SAME name. With a TOCTOU check-then-insert and
+            // no DB constraint, several would slip through; the unique index + typed-409 mapping
+            // guarantees exactly one success.
+            let name = "RaceMe"
+            await withTaskGroup(of: HTTPStatus.self) { group in
+                for _ in 0..<8 {
+                    group.addTask {
+                        var status: HTTPStatus = .internalServerError
+                        do {
+                            try await app.testing().test(.POST, "api/items", beforeRequest: { req in
+                                try req.content.encode(App.Item.DTO.Input(name: name))
+                            }, afterResponse: { res async in
+                                status = res.status
+                            })
+                        } catch {
+                            status = .internalServerError
+                        }
+                        return status
+                    }
+                }
+                var okCount = 0
+                for await status in group {
+                    if status == .ok { okCount += 1 } else { #expect(status == .conflict) }
+                }
+                #expect(okCount == 1)
             }
         }
     }

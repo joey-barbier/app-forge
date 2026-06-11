@@ -31,8 +31,11 @@ export interface AuthClientOptions {
  * - one shared inflight promise; latecomers await it
  * - the wait is bounded (withTimeout) — waiters reject, they never hang
  * - the original request is retried exactly ONCE after a successful refresh
- * - refresh failure or timeout clears all tokens and fails every waiter
- *   (a half-authenticated session is worse than a logout)
+ * - every waiter is failed on any refresh failure (a half-authenticated session is worse
+ *   than a clean error), BUT tokens are cleared ONLY on a real auth rejection (401 /
+ *   invalid_grant). A transport failure (offline, DNS, refused, timeout, 5xx) means the
+ *   refresh never reached a verdict — clearing tokens there forces a gratuitous logout on
+ *   a session that may still be valid. Network failures propagate; the session survives.
  * - the refresh call uses the raw transport, never request() (no recursion on 401)
  */
 export class AuthClient {
@@ -129,14 +132,37 @@ export class AuthClient {
       this.setTokens(pair);
       this.logger.debug('token refresh succeeded');
     } catch (error) {
-      // Fail ALL waiters and drop the session — never keep half-valid tokens.
-      this.clearTokens();
-      this.logger.error('token refresh failed — tokens cleared');
+      // Fail every waiter regardless — a half-authenticated session is worse than a clean
+      // error. But only DROP the session when the server actually rejected the refresh token
+      // (401 / invalid_grant). A transport failure (offline/DNS/refused/timeout/5xx) never
+      // reached a verdict: clearing here would log the user out over a flaky network.
+      if (AuthClient.isAuthRejection(error)) {
+        this.clearTokens();
+        this.logger.error('token refresh rejected — tokens cleared');
+      } else {
+        this.logger.error('token refresh failed (transport) — tokens kept');
+      }
       throw error;
     }
   }
 
   private static isUnauthorized(error: unknown): boolean {
     return error instanceof ApiError && error.statusCode === 401;
+  }
+
+  /**
+   * True only for a genuine auth rejection from the refresh endpoint — a 401, or a 400
+   * carrying the OAuth `invalid_grant` code. Timeouts (RefreshTimeout, 408), 5xx and raw
+   * network errors are transport failures, NOT a verdict on the refresh token.
+   */
+  private static isAuthRejection(error: unknown): boolean {
+    if (!(error instanceof ApiError)) return false;
+    if (error.statusCode === 401) return true;
+    if (error.statusCode === 400) {
+      // OAuth refresh rejection: the wire body's name is `invalid_grant`, or the raw body
+      // mentions it (servers vary). A plain 400 without that signal is NOT an auth verdict.
+      return error.errorName === 'invalid_grant' || /invalid_grant/i.test(error.rawMessage ?? '');
+    }
+    return false;
   }
 }

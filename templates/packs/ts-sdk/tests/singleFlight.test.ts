@@ -92,7 +92,9 @@ describe('single-flight token refresh', () => {
     expect(auth.getAccessToken()).toBe('access-1');
   });
 
-  test('refresh failure clears tokens and rejects ALL waiters', async () => {
+  test('a 401 refresh rejection clears tokens and rejects ALL waiters', async () => {
+    // failRefresh makes the fake API answer the refresh with a 401 (a real auth rejection:
+    // the refresh token is no longer valid) — the session is genuinely dead, drop it.
     const api = createFakeApi({ failRefresh: true });
     const auth = createClient(api);
 
@@ -104,10 +106,13 @@ describe('single-flight token refresh', () => {
     expect(results[0].status).toBe('rejected');
     expect(results[1].status).toBe('rejected');
     expect(api.refreshCalls()).toBe(1); // failure was shared, not retried per-waiter
-    expect(auth.getAccessToken()).toBeNull(); // half-authenticated session is worse than a logout
+    expect(auth.getAccessToken()).toBeNull(); // 401 = auth rejection → tokens cleared
   });
 
-  test('refresh timeout rejects waiters with RefreshTimeout and clears tokens', async () => {
+  test('refresh timeout rejects waiters with RefreshTimeout but KEEPS tokens', async () => {
+    // A timeout is a transport failure, not a verdict on the refresh token. Clearing tokens
+    // here would force a logout over a flaky/slow network (JP finding #4) — keep the session
+    // so a later retry can succeed once connectivity returns.
     const api = createFakeApi({ hangRefresh: true });
     const auth = createClient(api, 25);
 
@@ -125,7 +130,33 @@ describe('single-flight token refresh', () => {
       }
     }
     expect(api.refreshCalls()).toBe(1);
-    expect(auth.getAccessToken()).toBeNull();
+    expect(auth.getAccessToken()).toBe('expired-access'); // transport failure → tokens kept
+  });
+
+  test('a transport failure (network error) rejects waiters but KEEPS tokens', async () => {
+    // The refresh request never reaches the server (offline/DNS/refused): a raw Error, not an
+    // ApiError. Waiters fail, but the session is untouched — no gratuitous forced logout.
+    const transport: HttpTransport = {
+      async request<T>(method: HttpMethod, path: string, reqOptions: RequestOptions = {}): Promise<T> {
+        if (method === 'POST' && path === '/auth/refresh') {
+          throw new TypeError('fetch failed'); // what Node/undici throws when the host is unreachable
+        }
+        if (reqOptions.token !== 'access-0') throw ApiError.fromResponse(401, 'token expired');
+        return { ok: true } as T;
+      },
+    };
+    const context = createMemoryContext();
+    const auth = new AuthClient(transport, context);
+    auth.setTokens({ accessToken: 'expired-access', refreshToken: 'refresh-1' });
+
+    const results = await Promise.allSettled([
+      auth.request('GET', '/endpoint1'),
+      auth.request('GET', '/endpoint2'),
+    ]);
+
+    expect(results[0].status).toBe('rejected');
+    expect(results[1].status).toBe('rejected');
+    expect(auth.getAccessToken()).toBe('expired-access'); // network failure → tokens kept
   });
 
   test('a valid access token never triggers a refresh', async () => {

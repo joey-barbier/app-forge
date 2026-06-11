@@ -147,15 +147,16 @@ Scope feature views inside the domain type they render; scope screens inside `Ap
 extension Item      { struct DetailCard: View { … } }  // call site: Item.DetailCard(item:)
 extension ItemGroup { struct InviteCard: View { … } }  // call site: ItemGroup.InviteCard(group:…)
 extension App       { struct Feed: View { … } }        // call site: App.Feed()
+```
 
 > ⚠️ **Gotcha:** the `App` namespace collides with the `SwiftUI.App` protocol. Two rules make it
 > safe: (1) declare the namespace once — `enum App {}` in `App/AppNamespace.swift` (the scaffold
 > ships it); (2) the @main entry point must be declared `struct {{PROJECT_NAME}}App: SwiftUI.App`
 > (fully qualified) or it won't compile.
+
 > ⚠️ **Gotcha:** a multi-statement `var body: some View` inside an `extension App.X` silently
 > loses the implicit `@ViewBuilder` in some configurations — annotate `@ViewBuilder var body`
 > explicitly in extension-scoped views, or keep `body` a single expression.
-```
 
 - File name = call-site path without the dot: `ItemDetailCard.swift`, `AppFeed.swift`, `AppFeed+Translate.swift`. **One type per file.**
 - Why: free namespacing without submodules, no name clashes (`Item.DetailCard` vs `SharedItem.DetailCard` coexist), call sites read as domain language.
@@ -215,12 +216,12 @@ One map brick serves the personal screen AND every group screen; each injects it
 
 ```swift
 import OSLog
-let log = Logger(subsystem: "com.example.{{PROJECT_NAME}}", category: "Store")
+let log = Logger(subsystem: "{{BUNDLE_ID}}", category: "Store")
 log.notice("bootstrap: backend=\(label, privacy: .public) items=\(items.count)")
 ```
 
 - One `Logger` per layer (`category: "Store"`, `"Sync"`, …). Every `catch` logs the failed operation by name.
-- Stream from a device: `log stream --device --predicate 'subsystem == "com.example.{{PROJECT_NAME}}"'` — put this command in a doc comment next to the Logger.
+- Stream from a device: `log stream --device --predicate 'subsystem == "{{BUNDLE_ID}}"'` — put this command in a doc comment next to the Logger.
 
 > ⚠️ **Gotcha:** device logs show `<private>` instead of values. Cause: OSLog redacts interpolations by default. Fix: annotate non-sensitive debug values with `privacy: .public`. Never apply it to user content or tokens.
 

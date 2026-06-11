@@ -22,5 +22,8 @@ DATABASE_NAME=vapor_database
 ALLOWED_ORIGIN=http://localhost:3000
 
 # Monitoring (see docs-architecture/OPS.md)
+# When MONITORING_ENABLED=true, METRICS_TOKEN MUST be non-empty — boot fails fast otherwise
+# (an empty token would leave /metrics returning 401 forever). Leave it blank only while
+# MONITORING_ENABLED stays false.
 MONITORING_ENABLED=false
 METRICS_TOKEN=

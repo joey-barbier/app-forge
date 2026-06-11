@@ -1,7 +1,9 @@
 # Delivery Method — vertical slices, proof over claims (platform-agnostic)
 
-How work ships, regardless of stack. The platform pack's WORKFLOW.md adds the concrete
-build/run commands; this file is the method.
+How work ships, regardless of stack. This file is the method. The concrete build/run/proof
+commands come from the platform pack if it provides them (e.g. a `WORKFLOW.md` and a proof
+ladder); if the pack ships none, establish that loop yourself and record it in
+`.claude/memory/COMMANDS.md`.
 
 ## Vertical slices
 

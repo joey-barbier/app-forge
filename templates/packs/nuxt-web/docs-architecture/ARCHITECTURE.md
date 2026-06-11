@@ -29,6 +29,17 @@ L0  FOUNDATION          app/assets/css/tokens.css   design tokens (CSS custom pr
                         app/utils/    pure helpers/formatters — no Vue imports
 ```
 
+> **Target shape vs. what ships.** The map above is where each kind of file *goes* — not an
+> inventory of the skeleton. The scaffold ships the always-needed floor only:
+> `app/assets/css/{tokens,main}.css`, `app/utils/`, `app/domain/`, `app/designSystem/DSButton`,
+> `app/features/`, `app/pages/index.vue`, `app/app.vue`, and `server/api/health.get.ts`.
+> Everything else named here — `app/plugins/` (analytics/logger/flags), `app/constants/analytics.ts`,
+> `app/composables/api/`, `app/stores/` (Pinia — add `@pinia/nuxt` the day a store lands),
+> `app/middleware/auth.global.ts`, `app/layouts/`, `error.vue` — is created **the slice it earns
+> its first real file**. Don't pre-scaffold empty directories or add Pinia before a store exists;
+> the rules below say where things belong when they arrive, and the greps in §5 assume the target
+> layout (they no-op on directories that don't exist yet).
+
 ## 2. Dependency direction rules
 
 | Layer | May use | Must NEVER use | Why |

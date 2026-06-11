@@ -9,8 +9,9 @@ let package = Package(
         .package(path: "../{{PROJECT_NAME}}Core"),
     ],
     targets: [
-        // Repository implementations (CloudKit, URLSession, …). Protocols may live in Core;
-        // concrete impls + an InMemory variant (tests/previews) live here.
+        // REAL repository implementations only (CloudKit, URLSession, …). Protocols AND their
+        // InMemory variant (tests/previews/offline) live in Core — DataLayer ships IO-backed
+        // impls of those contracts. See docs-architecture/ARCHITECTURE.md §2.
         .target(
             name: "DataLayer",
             dependencies: [.product(name: "{{PROJECT_NAME}}Core", package: "{{PROJECT_NAME}}Core")],

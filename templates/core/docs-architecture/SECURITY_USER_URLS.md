@@ -97,8 +97,12 @@ Two hard rules:
 ## Open-limitations register — mandatory section
 
 A security doc that lists only what it blocks is marketing. List what it does **not**
-defend; honest limits beat false confidence. Keep this register updated in the project's
-own copy of this doc:
+defend; honest limits beat false confidence. The curated register below ships with this
+template and is refreshed by `update --apply` — **do not edit it in place** (your changes
+would be overwritten). When YOUR project carries an SSRF limitation specific to its design
+(a domain allowlist you added, an egress rule you rely on, a pin you couldn't implement),
+record it in the **gotchas log in `.claude/memory/PROJECT_STATE.md`** and in
+`.claude/memory/DECISIONS.md` — those files are yours and `update` never touches them.
 
 | # | Limitation | Status |
 |---|---|---|

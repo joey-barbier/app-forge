@@ -1,3 +1,14 @@
 .DS_Store
 node_modules/
 skill-forge-workspace/
+
+# Scaffolded throwaway projects. CONTRIBUTING tells you to create these in the
+# repo ROOT to self-check a pack (`init Throwaway --platform <id>`), and CI
+# scaffolds Test* projects there too. Never commit one: the leakage gate scans
+# tracked files and a real scaffold would also bloat the repo. Anchored with a
+# leading "/" so template Tests/ dirs (e.g. packs/vapor-api/Tests) stay tracked.
+/Throwaway/
+/Test*/
+
+# `npm pack` output (release-gate dry runs).
+*.tgz

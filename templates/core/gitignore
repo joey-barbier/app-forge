@@ -1,1 +1,15 @@
+# Secrets & local env — never commit
+.env
+.env.*
+
+# Dependencies
+node_modules/
+
+# OS noise
 .DS_Store
+
+# Logs
+*.log
+
+# Claude Code local overrides (machine-specific permissions/settings)
+.claude/settings.local.json

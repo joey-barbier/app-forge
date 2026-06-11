@@ -14,7 +14,7 @@ public func configure(_ app: Application) async throws {
     migrationsInit(app)
     middlewaresInit(app, config: config)
 
-    configureMonitoring(
+    try configureMonitoring(
         app: app,
         enabled: config.monitoringEnabled,
         metricsToken: config.metricsToken

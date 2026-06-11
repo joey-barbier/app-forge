@@ -27,9 +27,14 @@
     "cloudkit",
     "multi-platform"
   ],
-  "license": "MIT",
+  "author": "Joey Barbier (https://github.com/joey-barbier)",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://github.com/joey-barbier/app-forge#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/joey-barbier/app-forge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joey-barbier/app-forge/issues"
   }
 }

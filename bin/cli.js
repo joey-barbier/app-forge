@@ -37,6 +37,20 @@ function ask(question, fallback) {
   );
 }
 
+// The identifier is substituted RAW into JSON (package.json "name") and YAML
+// (project.yml bundleIdPrefix). Without validation, `--id 'evil","x":"y'` injects
+// JSON keys and `--id $'a\nKEY: v'` injects YAML keys. Allow only characters that
+// cover both reverse-DNS (com.me.app) and npm scoped names (@org/pkg): letters,
+// digits, dot, underscore, at, slash, hyphen. Everything else — quotes, braces,
+// colons, whitespace, newlines, backslashes — is rejected.
+function validateId(id) {
+  if (typeof id !== "string" || id.length === 0 || !/^[A-Za-z0-9._@/-]+$/.test(id)) {
+    console.error(`✗ "${id}" is not a valid identifier. Use only letters, digits and . _ @ / - (covers reverse-DNS like com.me.app and npm names like @org/pkg). No quotes, braces, colons, spaces or newlines.`);
+    process.exit(1);
+  }
+  return id;
+}
+
 function loadPacks() {
   if (!fs.existsSync(PACKS_DIR)) return [];
   return fs
@@ -61,7 +75,8 @@ function copyTree(src, dest, vars) {
       fs.mkdirSync(target, { recursive: true });
       copyTree(path.join(src, entry.name), target, vars);
     } else {
-      const content = substitute(fs.readFileSync(path.join(src, entry.name), "utf8"), vars);
+      const srcPath = path.join(src, entry.name);
+      const content = substitute(fs.readFileSync(srcPath, "utf8"), vars);
       if (MERGED.has(entry.name) && fs.existsSync(target)) {
         if (entry.name === "mcp.json") {
           const base = JSON.parse(fs.readFileSync(target, "utf8"));
@@ -72,7 +87,11 @@ function copyTree(src, dest, vars) {
           fs.appendFileSync(target, content.endsWith("\n") ? content : content + "\n");
         }
       } else {
-        fs.writeFileSync(target, content);
+        // Preserve the source mode so executable templates (e.g. vapor-api
+        // scripts/*.sh shipped 755) keep their exec bit instead of landing 644.
+        const mode = fs.statSync(srcPath).mode;
+        fs.writeFileSync(target, content, { mode });
+        if (mode & 0o111) fs.chmodSync(target, mode); // re-assert exec bit (mode on write only applies on create / is umask-masked)
       }
     }
   }
@@ -117,27 +136,53 @@ async function init(args) {
     }
   }
 
-  // 3. Identifier
-  const bundleId =
-    flag("--id") ?? flag("--bundle") ??
-    (await ask(pack?.idPrompt ?? "App identifier (reverse-DNS)", `com.example.${name.toLowerCase()}`));
-
+  // Collision guard — check BEFORE prompting for the identifier, so an existing
+  // directory fails fast instead of after a needless prompt.
   const dest = path.resolve(process.cwd(), name);
   if (fs.existsSync(dest)) {
     console.error(`✗ ${dest} already exists.`);
     process.exit(1);
   }
 
+  // 3. Identifier
+  // Pack-appropriate default: a pack may carry an explicit `idDefault`; otherwise
+  // packs whose prompt is about an npm/package name get an npm-style default, and
+  // everything else gets the reverse-DNS default.
+  const idPrompt = pack?.idPrompt ?? "App identifier (reverse-DNS)";
+  const idDefault =
+    pack?.idDefault ??
+    (/npm|package/i.test(idPrompt) ? name.toLowerCase() : `com.example.${name.toLowerCase()}`);
+  // --yes (or a non-TTY stdin, where ask() would hang at EOF and scaffold nothing)
+  // makes init non-interactive: use the default identifier instead of prompting.
+  let bundleId = flag("--id") ?? flag("--bundle");
+  if (bundleId === undefined) {
+    bundleId = (assumeYes || !process.stdin.isTTY) ? idDefault : await ask(idPrompt, idDefault);
+  }
+  validateId(bundleId);
+
   const vars = { name, bundleId, packLabel: pack ? pack.label : "none (universal core only)" };
 
+  // Honest mcp.json summary: context7 always ships (core); a platform MCP only
+  // appears when the chosen pack actually adds an mcp.json beyond core.
+  const packHasMcp = !!(pack && fs.existsSync(path.join(pack.dir, "mcp.json")));
+
   console.log(`\n⚒️  Forging ${name}${pack ? ` [${pack.id}]` : " [core only]"}…`);
-  fs.mkdirSync(dest, { recursive: true });
-  copyTree(CORE, dest, vars); // universal bricks
-  if (pack) copyTree(pack.dir, dest, vars); // platform bricks (override core, merge mcp/gitignore)
-  fs.writeFileSync(
-    path.join(dest, MANIFEST),
-    JSON.stringify({ version: pkg.version, pack: pack ? pack.id : null, projectName: name, bundleId }, null, 2) + "\n"
-  ); // update manifest — lets `app-forge update` re-render knowledge files later
+  // Wrap the whole scaffold: a partial directory from EACCES/ENOSPC would otherwise
+  // be left behind and the collision guard would then block any retry. On failure,
+  // remove the partial dir and exit with a clear message.
+  try {
+    fs.mkdirSync(dest, { recursive: true });
+    copyTree(CORE, dest, vars); // universal bricks
+    if (pack) copyTree(pack.dir, dest, vars); // platform bricks (override core, merge mcp/gitignore)
+    fs.writeFileSync(
+      path.join(dest, MANIFEST),
+      JSON.stringify({ version: pkg.version, pack: pack ? pack.id : null, projectName: name, bundleId }, null, 2) + "\n"
+    ); // update manifest — lets `app-forge update` re-render knowledge files later
+  } catch (err) {
+    fs.rmSync(dest, { recursive: true, force: true });
+    console.error(`✗ Failed to scaffold ${name}: ${err.message}\n   Removed the partial directory — fix the cause (permissions / disk space) and retry.`);
+    process.exit(1);
+  }
 
   try {
     execSync("git init -q", { cwd: dest });
@@ -156,7 +201,7 @@ Installed bricks:
   CLAUDE.md + docs-architecture/   Operating manual + knowledge base${pack ? " (core + " + pack.id + ")" : " (universal core)"}
   .claude/skills/                  /kickoff, /product-owner, /restore-context, /save-context
   .claude/memory/                  Persistent project memory (anti-hallucination)
-  .mcp.json                        MCP servers (context7 docs${pack ? " + platform tooling" : ""})
+  .mcp.json                        MCP servers (context7 docs${packHasMcp ? " + platform tooling" : ""})
   .appforge.json                   Update manifest — \`npx app-forge update\` refreshes docs/skills later
 ${pack?.requirements?.length ? "\nRequirements: " + pack.requirements.join(" · ") : ""}${pack?.notes ? "\n" + pack.notes.replaceAll("{{PROJECT_NAME}}", name) : ""}
 `);
@@ -213,7 +258,9 @@ async function update(args) {
       process.exit(1);
     }
     const name = flag("--name") ?? path.basename(root);
-    manifest = { version: "pre-manifest", pack: wanted === "none" ? null : wanted, projectName: name, bundleId: flag("--id") ?? `com.example.${name.toLowerCase()}` };
+    const id = flag("--id") ?? `com.example.${name.toLowerCase()}`;
+    validateId(id); // same raw-substitution sink as init — keep the identifier injection-safe here too
+    manifest = { version: "pre-manifest", pack: wanted === "none" ? null : wanted, projectName: name, bundleId: id };
     console.log(`   (no ${MANIFEST} — rebuilt from flags as ${manifest.projectName} / ${manifest.bundleId}; written on apply)`);
   } else {
     console.error(`✗ No ${MANIFEST} here — this project predates update support (or wasn't made by app-forge).
@@ -274,6 +321,7 @@ async function update(args) {
   }
   fs.writeFileSync(manifestPath, JSON.stringify({ ...manifest, version: pkg.version }, null, 2) + "\n");
   console.log(`\n✅ Updated ${pending.length} file(s) to templates ${pkg.version} (${MANIFEST} bumped).`);
+  console.log(`   Note: your own incidents/notes belong in .claude/memory/ (never touched); docs-architecture/ is curated and refreshed here.`);
 }
 
 const [, , command, ...rest] = process.argv;

@@ -1,6 +1,6 @@
 ---
 name: product-owner
-description: Act as the Product Owner — turn a raw idea into a validated PRD with epics and stories, through one focused interview. Use when the user describes a product idea to spec, says "PRD", "product brief", "spec my idea", "write the requirements", or when /kickoff reaches its product phase. The interview ALWAYS precedes any spec artifact.
+description: Act as the Product Owner — turn a raw idea into a validated PRD with epics and stories, through one focused interview. Use when the user wants a SPEC ONLY: says "PRD", "product brief", "spec my idea", "write the requirements", or when /kickoff reaches its product phase. The interview ALWAYS precedes any spec artifact. For an EMPTY project or "build my app / start the project" (idea → built running app, not just a doc), DEFER to the kickoff skill — kickoff owns the full delivery and calls this skill for its product phase.
 ---
 
 # Product Owner — idea → validated PRD

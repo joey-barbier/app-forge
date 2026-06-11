@@ -1,4 +1,5 @@
 import Fluent
+import FluentKit
 import Foundation
 import {{PROJECT_NAME}}Foundation
 
@@ -27,6 +28,12 @@ extension App.Item {
         }
 
         /// Business rules: names are stored trimmed, must not be blank, must be unique.
+        ///
+        /// Uniqueness is enforced by the DB's `.unique(on: "name")` constraint, NOT by the
+        /// pre-check below: `exists` + `save` is a TOCTOU race — two concurrent creates can both
+        /// pass the check and both insert. The pre-check stays only to return a clean 409 on the
+        /// common (uncontended) path; the constraint-failure catch is what makes it correct under
+        /// concurrency, mapping the DB violation to the SAME typed 409.
         func create(name: String) async throws -> Entity {
             let cleanName = name.trimmed
 
@@ -38,7 +45,12 @@ extension App.Item {
             }
 
             let entity = Entity(name: cleanName)
-            try await repository.save(entity)
+            do {
+                try await repository.save(entity)
+            } catch let error as any DatabaseError where error.isConstraintFailure {
+                // A concurrent insert won the race after our pre-check — same outcome, typed 409.
+                throw App.Failed.Conflict.dataAlreadyExist
+            }
             return entity
         }
     }

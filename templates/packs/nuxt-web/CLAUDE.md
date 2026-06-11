@@ -37,6 +37,14 @@ L0 `app/assets/css/tokens.css` + `app/utils/` · L1 `app/plugins/` (analytics/lo
 imports Vue or Nuxt**) + `app/designSystem/` (domain-blind DS modules) · L4 `app/features/` ·
 L5 `app/pages/` + `app/layouts/` + `app/stores/` + `app/middleware/`. Imports point downward only.
 
+> **What ships vs. what you add at kickoff.** The skeleton ships only the always-needed L0/L3/L5
+> floor: `app/assets/css/`, `app/utils/`, `app/domain/`, `app/designSystem/DSButton`, `app/features/`,
+> `app/pages/index.vue`, `app/app.vue`, `server/api/health.get.ts`. The rest of the map above —
+> `app/plugins/`, `app/constants/`, `app/composables/api/`, `app/stores/` (Pinia), `app/middleware/`,
+> `app/layouts/`, `error.vue` — is the **target shape**: create each directory (and add its dep, e.g.
+> `@pinia/nuxt` for stores) the slice it first earns a real file. Don't pre-create empty folders; the
+> map tells you where a thing goes when it lands, not what exists today.
+
 ## Non-negotiable rules
 - **Unit tests first**: `npm run test` (vitest, seconds) before any `nuxt build`. Every test script
   must run from a clean checkout — a script whose dependency isn't installed is testing theater.

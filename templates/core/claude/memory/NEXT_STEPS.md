@@ -7,4 +7,5 @@
 _(slice backlog appears here after kickoff)_
 
 ## Blockers
-_(waiting-on-user items: Apple portal, schema deploy, device tests…)_
+_(waiting-on-user items: accounts/credentials, backend provisioning, store/registry setup,
+real-environment tests — whatever only the user can unblock for this stack)_

@@ -20,4 +20,5 @@ _(nothing yet)_
 _(none yet)_
 
 ## Launch blockers
-_(filled during kickoff: schema deploy, age rating, privacy policy, etc.)_
+_(filled during kickoff: things only the user can unblock — accounts/credentials, backend
+provisioning, store/registry setup, privacy policy, etc. The pack/kickoff names the specifics.)_

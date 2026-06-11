@@ -21,7 +21,7 @@ Private DB (per user)                 Shared DB (per user)
 - **Custom zones are mandatory** — change tokens (`recordZoneChanges`) and `CKShare` don't work in
   the default zone. One zone per shared group (`GroupZone-<UUID>`), found later by name prefix.
 - **One container constant, used everywhere** (both repositories AND share acceptance), identical to
-  the entitlement: `iCloud.com.example.{{PROJECT_NAME}}`. A second hardcoded id = silent data split.
+  the entitlement: `iCloud.{{BUNDLE_ID}}`. A second hardcoded id = silent data split.
 - Centralize every record type / field / subscription id in one `CloudKitConfig` enum. No string
   literals at call sites.
 

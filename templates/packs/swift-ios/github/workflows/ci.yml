@@ -8,6 +8,15 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Select newest Xcode (templates use swift-tools 6.2 → Xcode 26+)
+        # macos-latest defaults to an older Xcode whose Swift can't build swift-tools 6.2.
+        # Pick the newest installed Xcode (mirrors the AppForge scaffold-swift job).
+        run: |
+          set -o pipefail
+          LATEST="$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)"
+          echo "Using $LATEST"
+          sudo xcode-select -s "$LATEST"
+          swift --version
       - name: Core tests (the spec)
         run: swift test --package-path Packages/{{PROJECT_NAME}}Core
       - name: DS builds
@@ -15,13 +24,25 @@ jobs:
       - name: DataLayer builds
         run: swift build --package-path Packages/DataLayer
       - name: L5 typecheck ladder (no .xcodeproj needed)
+        # Build EVERY package for the simulator into ONE shared derivedData, then typecheck the
+        # app sources against ALL of their products — app code imports DS + Core + DataLayer, so a
+        # single-package -I would fail 'no such module'. A shared -derivedDataPath collects every
+        # .swiftmodule under one Products dir. pipefail makes `... | tail -1` surface a failed build
+        # instead of masking it behind tail's exit 0.
         run: |
-          cd Packages/{{PROJECT_NAME}}DS
-          xcodebuild -scheme {{PROJECT_NAME}}DS -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/dd build | tail -1
-          cd ../..
+          set -o pipefail
+          ROOT="$PWD"
+          DD=/tmp/dd
+          for pkg in {{PROJECT_NAME}}DS {{PROJECT_NAME}}Core DataLayer; do
+            ( cd "$ROOT/Packages/$pkg" && \
+              xcodebuild -scheme "$pkg" \
+                -destination 'generic/platform=iOS Simulator' \
+                -derivedDataPath "$DD" build 2>&1 | tail -1 )
+          done
+          PRODUCTS="$DD/Build/Products/Debug-iphonesimulator"
           xcrun swiftc -typecheck -parse-as-library -swift-version 6 \
             -default-isolation MainActor -module-name {{PROJECT_NAME}} \
-            -sdk $(xcrun --sdk iphonesimulator --show-sdk-path) \
+            -sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
             -target arm64-apple-ios26.0-simulator \
-            -I /tmp/dd/Build/Products/Debug-iphonesimulator \
+            -I "$PRODUCTS" \
             $(find {{PROJECT_NAME}} -name '*.swift')

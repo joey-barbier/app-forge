@@ -102,7 +102,7 @@ let package = Package(
 ### DataLayer — IO implementations
 - One repository class/actor per Core protocol, plus mapping files (`CKRecord+Mapping.swift`,
   `DTO+Mapping.swift`) and config (`CloudKitConfig` holding the single container ID constant
-  `iCloud.com.example.{{PROJECT_NAME}}` — one constant, referenced everywhere, equal to the entitlement).
+  `iCloud.{{BUNDLE_ID}}` — one constant, referenced everywhere, equal to the entitlement).
 
 > ⚠️ **Gotcha:** Symptom — Swift 6 data-race errors (or runtime corruption) around `CKRecord`.
 > Cause — `CKRecord` is non-`Sendable`; it must not cross actor boundaries. Fix — fetch and map
@@ -232,7 +232,7 @@ Build matrix an agent should run before claiming "done":
 cd Packages/{{PROJECT_NAME}}Core && swift test            # logic — seconds
 cd Packages/DataLayer && swift build      # IO compiles against Core contracts
 cd Packages/{{PROJECT_NAME}}DS && swift build
-xcodebuild -project "{{PROJECT_NAME}}/{{PROJECT_NAME}}.xcodeproj" -scheme {{PROJECT_NAME}} \
+xcodebuild -project {{PROJECT_NAME}}.xcodeproj -scheme {{PROJECT_NAME}} \
   -destination 'generic/platform=iOS Simulator' build                  # app assembly only
 ```
 

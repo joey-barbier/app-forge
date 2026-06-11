@@ -8,7 +8,13 @@
 #   leakage          — tracked files contain no strings from the source apps
 #   scaffold-core    — unknown platform → universal core only, key files present
 #   scaffold-swift   — swift-ios skeleton builds (DS + DataLayer) and tests (Core)
+#   scaffold-vapor   — vapor-api skeleton builds and tests (in-memory SQLite)
+#   scaffold-nuxt    — nuxt-web skeleton installs, builds and unit-tests
+#   scaffold-ts-sdk  — ts-sdk skeleton typechecks, tests and builds (dist verified)
 #   templates-sanity — placeholders limited to the supported set, manifests valid
+#
+# CONTRIBUTING.md requires a scaffold-<pack-id> job per shipped pack: README marks a
+# pack ✅ only once its skeleton is proven here on the right runner.
 
 name: CI
 
@@ -102,6 +108,87 @@ jobs:
         run: swift build --package-path TestApp/Packages/DataLayer
       - name: Test the core package
         run: swift test --package-path TestApp/Packages/TestAppCore
+
+  scaffold-vapor:
+    name: scaffold-vapor (skeleton builds + tests)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Select newest Xcode (vapor pack needs a Swift 6 toolchain)
+        run: |
+          LATEST="$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)"
+          echo "Using $LATEST"
+          sudo xcode-select -s "$LATEST"
+          swift --version
+      - name: Scaffold a Vapor API project
+        run: node bin/cli.js init TestApi --platform vapor-api --id com.test.api --yes
+      - name: Assert no unsubstituted placeholders
+        run: |
+          if grep -rnIE --exclude-dir=.git '\{\{[A-Z][A-Z0-9_]*\}\}' TestApi; then
+            echo "::error::unsubstituted placeholder in scaffolded project"
+            exit 1
+          fi
+          echo "Placeholders fully substituted"
+      - name: Build the app (resolves Vapor/Fluent and compiles)
+        # No database needed: the test environment uses in-memory SQLite (see pack notes).
+        run: swift build --package-path TestApi
+      - name: Test the full stack (boot + contracts on in-memory SQLite)
+        run: swift test --package-path TestApi
+
+  scaffold-nuxt:
+    name: scaffold-nuxt (skeleton installs + builds + tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Scaffold a Nuxt web project
+        run: node bin/cli.js init TestWeb --platform nuxt-web --id com.test.web --yes
+      - name: Assert no unsubstituted placeholders
+        run: |
+          if grep -rnIE --exclude-dir=.git '\{\{[A-Z][A-Z0-9_]*\}\}' TestWeb; then
+            echo "::error::unsubstituted placeholder in scaffolded project"
+            exit 1
+          fi
+          echo "Placeholders fully substituted"
+      - name: Install deps
+        # Skeleton ships no lockfile, so `npm install`; `postinstall` runs `nuxt prepare`.
+        run: npm install --prefix TestWeb
+      - name: Unit tests (vitest, no Nuxt boot)
+        run: npm --prefix TestWeb run test
+      - name: Production build (nuxt build → .output/)
+        run: npm --prefix TestWeb run build
+
+  scaffold-ts-sdk:
+    name: scaffold-ts-sdk (skeleton typechecks + tests + builds)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Scaffold a TypeScript SDK project
+        # --id becomes the npm package name; an @scope/name is a valid npm-style id.
+        run: node bin/cli.js init TestSdk --platform ts-sdk --id "@test/sdk" --yes
+      - name: Assert no unsubstituted placeholders
+        run: |
+          if grep -rnIE --exclude-dir=.git '\{\{[A-Z][A-Z0-9_]*\}\}' TestSdk; then
+            echo "::error::unsubstituted placeholder in scaffolded project"
+            exit 1
+          fi
+          echo "Placeholders fully substituted"
+      - name: Install deps
+        run: npm install --prefix TestSdk
+      - name: Typecheck (tsc --noEmit — fastest signal)
+        run: npm --prefix TestSdk run typecheck
+      - name: Unit tests (the "test" script is `vitest run`)
+        run: npm --prefix TestSdk run test
+      - name: Build + dist verification (tsup → verify-dist.mjs)
+        run: npm --prefix TestSdk run build
 
   templates-sanity:
     name: templates-sanity (placeholders + pack manifests)

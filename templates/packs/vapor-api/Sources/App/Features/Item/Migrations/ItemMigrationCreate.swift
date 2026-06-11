@@ -11,6 +11,10 @@ extension App.Item.Migrations {
                 .id()
                 .field("name", .string, .required)
                 .field("created_at", .datetime)
+                // Name uniqueness is enforced by the DATABASE, not by a check-then-insert in
+                // the service (that read+write is a TOCTOU race under concurrency). The Service
+                // still pre-checks for a clean 409, but this constraint is the source of truth.
+                .unique(on: "name")
                 .create()
         }
 
