@@ -48,7 +48,7 @@ export const meta = {
 import { readFileSync, readdirSync } from 'node:fs'
 import { join, basename } from 'node:path'
 
-const FORGE = '/Users/orka/dev/Orka/app-forge' // boilerplate repo root — adjust if needed
+const FORGE = '<path-to-your-app-forge-checkout>' // boilerplate repo root — adjust if needed
 const REG = join(FORGE, 'tools', 'persona-regression')
 const HARNESS = readFileSync(join(REG, 'HARNESS.md'), 'utf8').replaceAll('<FORGE>', FORGE)
 const RUBRIC = readFileSync(join(REG, 'AUDIT_RUBRIC.md'), 'utf8')
