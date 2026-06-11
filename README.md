@@ -24,7 +24,7 @@ AppForge separates **what is universal** from **what is platform-specific**:
 
 ```
 ┌─────────────────────────── UNIVERSAL CORE (always installed) ───────────────────────────┐
-│  ARCHITECTURE_PRINCIPLES.md   the 4-layer lego model — tokens → data → core → UI        │
+│  ARCHITECTURE_PRINCIPLES.md   the 6-layer lego model (L0 Foundation → L5 Features)      │
 │  DELIVERY.md                  vertical slices, proof-over-claims, memory protocol       │
 │  skills/                      /kickoff (team lead) · /product-owner (PRD) ·             │
 │                               /restore-context · /save-context                          │
@@ -34,8 +34,10 @@ AppForge separates **what is universal** from **what is platform-specific**:
                                           +
 ┌─────────────────────────── PLATFORM PACK (chosen at init) ──────────────────────────────┐
 │  swift-ios   ✅  Swift 6.2 · SwiftUI · CloudKit/CKShare war stories · design-system     │
-│                  package · Swift Testing strategy · simulator MCP · buildable skeleton  │
-│  nuxt-web    🔜  kotlin-android 🔜  vapor-api 🔜  …                                      │
+│  vapor-api   ✅  Swift API: feature modules · typed errors · env discipline · Docker    │
+│  nuxt-web    ✅  Nuxt 4: DS modules · i18n tooling · SEO/auth recipes · real tests      │
+│  ts-sdk      ✅  typed SDK contract: single-flight auth · tagged releases · exports map │
+│  kotlin-android 🔜  …                                                                   │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
