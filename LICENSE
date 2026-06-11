@@ -19,3 +19,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+TEMPLATE OUTPUT EXCEPTION
+
+The contents of the templates/ directory, when rendered into a project by the
+app-forge CLI (`init` or `update`), are provided without any license obligation:
+generated projects belong entirely to their authors, who may use, modify,
+relicense and distribute them freely, with no attribution required.
+This exception applies to generated output only; the app-forge tool and its
+source repository remain under the MIT License above.

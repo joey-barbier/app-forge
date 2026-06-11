@@ -93,4 +93,5 @@ extract YOUR production war stories into a pack.
 
 ## License
 
-MIT
+MIT — with a **template output exception**: everything `app-forge` generates into your
+project is 100% yours. No attribution, no obligations. (See LICENSE.)
