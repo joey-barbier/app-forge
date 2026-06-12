@@ -52,7 +52,7 @@ templates/packs/<pack-id>/
                                 #   e.g. Packages/{{PROJECT_NAME}}Core/ with ≥1 real test
 ```
 
-`pack.json` — all six keys:
+`pack.json` — six required keys (+ optional `idDefault`):
 
 ```jsonc
 {

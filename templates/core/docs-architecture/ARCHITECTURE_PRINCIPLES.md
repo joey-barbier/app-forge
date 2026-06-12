@@ -66,10 +66,10 @@ category — it is **computed from its dependencies**:
 > A brick's level = (highest level among the bricks it imports) + 1. Place it as LOW as it
 > can possibly live.
 
-Worked example — adding a `Monitoring` brick:
+Worked example — adding a `RateLimiter` brick:
 1. Assume **L0**… but it needs base formatters from Foundation → it must sit above L0 → **L1**.
-2. At L1… but it reads sampling rules from remote config, which lives in Ops (L1) → above L1 → **L2**.
-3. At L2 nothing else pushes it up → **it lands at L2.** Done — even though "monitoring"
+2. At L1… but it reads its quotas from remote config, which lives in Ops (L1) → above L1 → **L2**.
+3. At L2 nothing else pushes it up → **it lands at L2.** Done — even though "rate limiting"
    *sounds* like Ops, its dependencies decide, not its name.
 
 Corollaries:

@@ -36,5 +36,8 @@
   },
   "bugs": {
     "url": "https://github.com/joey-barbier/app-forge/issues"
+  },
+  "scripts": {
+    "test": "node --test"
   }
 }

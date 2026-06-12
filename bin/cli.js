@@ -44,8 +44,8 @@ function ask(question, fallback) {
 // digits, dot, underscore, at, slash, hyphen. Everything else — quotes, braces,
 // colons, whitespace, newlines, backslashes — is rejected.
 function validateId(id) {
-  if (typeof id !== "string" || id.length === 0 || !/^[A-Za-z0-9._@/-]+$/.test(id)) {
-    console.error(`✗ "${id}" is not a valid identifier. Use only letters, digits and . _ @ / - (covers reverse-DNS like com.me.app and npm names like @org/pkg). No quotes, braces, colons, spaces or newlines.`);
+  if (typeof id !== "string" || id.length === 0 || id.length > 100 || !/^[A-Za-z0-9._@/-]+$/.test(id)) {
+    console.error(`✗ "${id}" is not a valid identifier. Use only letters, digits and . _ @ / - (covers reverse-DNS like com.me.app and npm names like @org/pkg), max 100 chars. No quotes, braces, colons, spaces or newlines.`);
     process.exit(1);
   }
   return id;
@@ -105,11 +105,19 @@ async function init(args) {
   const assumeYes = args.includes("--yes") || args.includes("-y");
   const packs = loadPacks();
 
-  // 1. Project name
-  let name = args.find((a) => !a.startsWith("-") && a !== flag("--platform") && a !== flag("--id"));
+  // 1. Project name — first POSITIONAL token, by index (skip value-taking flags' values).
+  // (Value-string exclusion would wrongly drop a name that equals the --platform/--id value,
+  // e.g. `init swift-ios --platform swift-ios`, then hang at a non-TTY prompt.)
+  const valueFlags = new Set(["--platform", "--id", "--bundle"]);
+  let name;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i].startsWith("-")) { if (valueFlags.has(args[i])) i++; continue; }
+    name = args[i];
+    break;
+  }
   if (!name) name = await ask("Project name (UpperCamelCase, e.g. MyApp)");
-  if (!/^[A-Z][A-Za-z0-9]*$/.test(name)) {
-    console.error(`✗ "${name}" must be UpperCamelCase (it becomes module/type names).`);
+  if (!/^[A-Z][A-Za-z0-9]{0,63}$/.test(name)) {
+    console.error(`✗ "${name}" must be UpperCamelCase, max 64 chars (it becomes module/type names).`);
     process.exit(1);
   }
 
@@ -314,13 +322,31 @@ async function update(args) {
     console.log(`\n   Dry run — nothing written. Re-run with --apply to update the ${pending.length} file(s) above.`);
     return;
   }
+  const rootReal = fs.realpathSync(root);
+  let written = 0;
   for (const rel of pending) {
     const file = path.join(root, rel);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const dir = path.dirname(file);
+    fs.mkdirSync(dir, { recursive: true });
+    // Never write through a symlink that escapes the project tree (a hostile clone could
+    // plant one at an owned path). Guard BOTH the file itself and its (real) parent dir.
+    try {
+      if (fs.lstatSync(file).isSymbolicLink()) {
+        console.log(`  ⚠ skipped     ${rel} (is a symlink — refusing to write through it)`);
+        continue;
+      }
+    } catch { /* ENOENT: brand-new file, fine */ }
+    const dirReal = fs.realpathSync(dir);
+    if (dirReal !== rootReal && !dirReal.startsWith(rootReal + path.sep)) {
+      console.log(`  ⚠ skipped     ${rel} (path escapes the project tree — refusing)`);
+      continue;
+    }
     fs.writeFileSync(file, desired.get(rel));
+    written++;
   }
   fs.writeFileSync(manifestPath, JSON.stringify({ ...manifest, version: pkg.version }, null, 2) + "\n");
-  console.log(`\n✅ Updated ${pending.length} file(s) to templates ${pkg.version} (${MANIFEST} bumped).`);
+  const skipped = pending.length - written;
+  console.log(`\n✅ Updated ${written} file(s) to templates ${pkg.version} (${MANIFEST} bumped).${skipped ? ` ${skipped} skipped (symlink/escape guard).` : ""}`);
   console.log(`   Note: your own incidents/notes belong in .claude/memory/ (never touched); docs-architecture/ is curated and refreshed here.`);
 }
 
