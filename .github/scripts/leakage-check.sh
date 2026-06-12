@@ -51,10 +51,20 @@ PATTERN_CS="\\b(${NAME_CS})"                  # case-sensitive
 # keep "orka" out of "workaround" and the voice "tenor" out of the results.
 # `git ls-files -z` is NUL-delimited and `xargs -0 … grep -I` skips binaries, so
 # odd paths are safe and bash 3.2 (default macOS) works — no arrays needed.
+# The published npm package is scoped to the author's PUBLIC npm scope, which
+# legitimately puts "horka" in the repo-meta files (package.json name, README and
+# CLI usage strings). That scope is intentional public branding, not a leak — so
+# the meta files below are scanned with the scope literal stripped first, while
+# TEMPLATES stay 100% strict (no exception ever ships into a generated project).
+SCOPE='@horka/app-forge'
+META='README.md bin/cli.js CONTRIBUTING.md'
 list_files() {
   git ls-files -z -- \
     ':(exclude)LICENSE' \
     ':(exclude)package.json' \
+    ':(exclude)README.md' \
+    ':(exclude)bin/cli.js' \
+    ':(exclude)CONTRIBUTING.md' \
     ':(exclude).github/scripts/leakage-check.sh'
 }
 
@@ -63,7 +73,7 @@ fail=0
 # grep exits 1 on "no match" (our success case). The printed line is
 # file:line:matched-text, so a reviewer sees which fragment hit where.
 
-# 1) Case-insensitive names + literal secrets.
+# 1) Case-insensitive names + literal secrets (everything except meta + allowlist).
 if list_files | xargs -0 grep -nIiE "$PATTERN_CI"; then
   echo "::error::Forbidden project-specific strings in tracked files (file:line:match above)."
   fail=1
@@ -75,11 +85,19 @@ if list_files | xargs -0 grep -nIE "$PATTERN_CS"; then
   fail=1
 fi
 
-# 3) package.json — names allowed ONLY on the "url" and "author" lines.
-if grep -niE "$PATTERN_CI" package.json | grep -vE '"url"|"author"'; then
-  echo "::error::Forbidden strings in package.json outside the repository URL / author."
-  fail=1
-fi
+# 3) Repo-meta files (package.json + README + CLI + CONTRIBUTING): scan with the
+#    public scope literal removed, so only a REAL leak (not the @scope) trips it.
+for f in package.json $META; do
+  [ -f "$f" ] || continue
+  if sed "s#${SCOPE}##g" "$f" | grep -nIiE "$PATTERN_CI" | grep -vE '"url"|"author"'; then
+    echo "::error::Forbidden strings in $f (outside the public npm scope / repo URL / author)."
+    fail=1
+  fi
+  if sed "s#${SCOPE}##g" "$f" | grep -nIE "$PATTERN_CS"; then
+    echo "::error::Forbidden internal codename in $f."
+    fail=1
+  fi
+done
 
 if [ "$fail" -eq 0 ]; then
   echo "Leakage check passed: no forbidden strings in tracked files."

@@ -1,5 +1,5 @@
 {
-  "name": "app-forge",
+  "name": "@horka/app-forge",
   "version": "0.1.0",
   "description": "Scaffold projects where Claude Code is the team lead, not the assistant. One command installs a proven 6-layer architecture, conventions, production gotchas, a memory system, and a /kickoff skill that takes your idea from interview to PRD to a built, tested, running app. Packs: iOS/SwiftUI, Vapor API, Nuxt, TypeScript SDK.",
   "bin": {

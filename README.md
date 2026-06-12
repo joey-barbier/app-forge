@@ -12,7 +12,7 @@ including the bugs that cost days — written down so no one pays for them twice
 ## Quick start
 
 ```bash
-npx app-forge init MyApp        # questionnaire: platform, identifier
+npx @horka/app-forge init MyApp        # questionnaire: platform, identifier
 cd MyApp
 claude
 > /kickoff                      # describe your idea — Claude builds it

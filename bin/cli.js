@@ -2,7 +2,7 @@
 /**
  * app-forge — scaffold a Claude-Code-first project, any platform.
  *
- *   npx app-forge init MyApp [--platform swift-ios] [--id com.me.myapp] [--yes]
+ *   npx @horka/app-forge init MyApp [--platform swift-ios] [--id com.me.myapp] [--yes]
  *
  * Zero dependencies. Assembles the UNIVERSAL CORE (architecture principles, delivery
  * method, memory system, kickoff/product-owner skills, context7 MCP) + a PLATFORM PACK
@@ -210,7 +210,7 @@ Installed bricks:
   .claude/skills/                  /kickoff, /product-owner, /restore-context, /save-context
   .claude/memory/                  Persistent project memory (anti-hallucination)
   .mcp.json                        MCP servers (context7 docs${packHasMcp ? " + platform tooling" : ""})
-  .appforge.json                   Update manifest — \`npx app-forge update\` refreshes docs/skills later
+  .appforge.json                   Update manifest — \`npx @horka/app-forge update\` refreshes docs/skills later
 ${pack?.requirements?.length ? "\nRequirements: " + pack.requirements.join(" · ") : ""}${pack?.notes ? "\n" + pack.notes.replaceAll("{{PROJECT_NAME}}", name) : ""}
 `);
 }
@@ -363,9 +363,9 @@ if (command === "init") {
   console.log(`app-forge — Claude-Code-first project factory (any platform)
 
 Usage:
-  npx app-forge init <ProjectName> [--platform swift-ios] [--id com.me.app] [--yes]
-  npx app-forge update [--apply]      (inside a generated project — refresh docs/skills, never your code or memory)
-  npx app-forge packs
+  npx @horka/app-forge init <ProjectName> [--platform swift-ios] [--id com.me.app] [--yes]
+  npx @horka/app-forge update [--apply]      (inside a generated project — refresh docs/skills, never your code or memory)
+  npx @horka/app-forge packs
 `);
   if (command) process.exit(1);
 }
